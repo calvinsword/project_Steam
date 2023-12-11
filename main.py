@@ -3,7 +3,7 @@ from pico_i2c_lcd import I2cLcd
 import time
 #input in seconds
 
-
+data_int = -1
 
 #pin designation
 buzzer_pin = Pin(20, Pin.OUT)
