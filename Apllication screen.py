@@ -13,10 +13,11 @@ Black = 0, 0, 0
 size = width, height = 1000, 800
 screen = pygame.display.set_mode(size, )
 screen.fill(White)
-mainscreen = True
+mainscreen = False
 gamescreen = False
+inlogschermU = True
 snake_speed = 15
-
+username = ""
 # Window size
 window_x = 1000
 window_y = 800
@@ -103,50 +104,77 @@ def game_over():
 
 while running:
     time1 = time.time()
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            quit()
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_e:
-                print("")
-            if gamescreen:
-                if event.key == pygame.K_UP:
-                    change_to = 'UP'
-                if event.key == pygame.K_DOWN:
-                    change_to = 'DOWN'
-                if event.key == pygame.K_LEFT:
-                    change_to = 'LEFT'
-                if event.key == pygame.K_RIGHT:
-                    change_to = 'RIGHT'
-                if change_to == 'UP' and direction != 'DOWN':
-                    direction = 'UP'
-                if change_to == 'DOWN' and direction != 'UP':
-                    direction = 'DOWN'
-                if change_to == 'LEFT' and direction != 'RIGHT':
-                    direction = 'LEFT'
-                if change_to == 'RIGHT' and direction != 'LEFT':
-                    direction = 'RIGHT'
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            test = pygame.mouse.get_pressed(num_buttons=3)
-            if test[0]:  # true if left click
-                mousepos = pygame.mouse.get_pos()
-                mousey = int(mousepos[0])
-                mousex = int(mousepos[1])
-                if mainscreen:
-                    if 1000 > mousey > 800 and 30 > mousex > 0:
-                        mainscreen = False
-                        gamescreen = True
-                elif gamescreen:
-                    if 1000 > mousey > 800 and 30 > mousex > 0:
-                        mainscreen = True
-                        gamescreen = False
+    if inlogschermU:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                quit()
+            if event.type == pygame.KEYDOWN:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        print(username)
+                        text = ''
+                    elif event.key == pygame.K_BACKSPACE:
+                        username = username[:-1]
+                    else:
+                        username += event.unicode
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                test = pygame.mouse.get_pressed(num_buttons=3)
+                if test[0]:  # true if left click
+                    mousepos = pygame.mouse.get_pos()
+                    mousey = int(mousepos[0])
+                    mousex = int(mousepos[1])
 
-            elif test[1]:  # true if middle click
-                print("yay")
-            elif test[2]:  # true if right click
-                print("yay")
-            else:  # if scroll wheel is activated
-                print('nah')
+                elif test[1]:  # true if middle click
+                    print("yay")
+                elif test[2]:  # true if right click
+                    print("yay")
+                else:  # if scroll wheel is activated
+                    print('nah')
+    else:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_e:
+                    print("")
+                if gamescreen:
+                    if event.key == pygame.K_UP:
+                        change_to = 'UP'
+                    if event.key == pygame.K_DOWN:
+                        change_to = 'DOWN'
+                    if event.key == pygame.K_LEFT:
+                        change_to = 'LEFT'
+                    if event.key == pygame.K_RIGHT:
+                        change_to = 'RIGHT'
+                    if change_to == 'UP' and direction != 'DOWN':
+                        direction = 'UP'
+                    if change_to == 'DOWN' and direction != 'UP':
+                        direction = 'DOWN'
+                    if change_to == 'LEFT' and direction != 'RIGHT':
+                        direction = 'LEFT'
+                    if change_to == 'RIGHT' and direction != 'LEFT':
+                        direction = 'RIGHT'
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                test = pygame.mouse.get_pressed(num_buttons=3)
+                if test[0]:  # true if left click
+                    mousepos = pygame.mouse.get_pos()
+                    mousey = int(mousepos[0])
+                    mousex = int(mousepos[1])
+                    if mainscreen:
+                        if 1000 > mousey > 800 and 30 > mousex > 0:
+                            mainscreen = False
+                            gamescreen = True
+                    elif gamescreen:
+                        if 1000 > mousey > 800 and 30 > mousex > 0:
+                            mainscreen = True
+                            gamescreen = False
+
+                elif test[1]:  # true if middle click
+                    print("yay")
+                elif test[2]:  # true if right click
+                    print("yay")
+                else:  # if scroll wheel is activated
+                    print('nah')
 
     screen.fill(White)
     if mainscreen:
@@ -154,7 +182,7 @@ while running:
         text = font.render("Im  Bored", False, (0, 0, 0))
         screen.blit(text, (805, 5))
 
-    if gamescreen:
+    elif gamescreen:
         if Running:
             screen.fill(black)
             pygame.init()
@@ -236,6 +264,16 @@ while running:
             pygame.draw.rect(screen, White, (800, 0, 200, 30), 3)
             text = font.render("Go Back", False, (255, 255, 255))
             screen.blit(text, (805, 5))
+
+    elif inlogschermU:
+        text = font.render("Login with your steam Username", False, (0, 0, 0))
+        screen.blit(text, (100, 50))
+        pygame.draw.rect(screen, Black, (95, 45, 340, 30), 3)
+        text = font.render("Username:", False, (0, 0, 0))
+        screen.blit(text, (100, 100))
+        pygame.draw.rect(screen, Black, (95, 95, 115, 30), 3)
+        text = font.render(username, False, (0, 0, 0))
+        screen.blit(text, (150, 200))
 
     pygame.time.wait(0)
     pygame.display.flip()
