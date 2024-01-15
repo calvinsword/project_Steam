@@ -1,15 +1,14 @@
+import requests
+
 # Steam API
 """KEY IS: 7D0FF89CE8B73A585A3265963AE39708 -- 76561199005826631"""
 """Breid het dashboard uit met functionaliteit die de data live uit de Steam API haalt
 in plaats van uit het bronbestand
 (bij voorkeur zo gestructureerd dat er géén code tussen functies is gekopieerd)."""
 
-import requests
-
 APIKEY = '7D0FF89CE8B73A585A3265963AE39708'
 STEAMID = '76561199040506358'
 LINK = 'http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=' + APIKEY + '&steamid=' + STEAMID + '&relationship=friend'
-
 
 friendlist = requests.get(LINK).json()['friendslist']['friends']
 
@@ -17,9 +16,7 @@ steamidlist = []
 for i in range(len(friendlist)):
     steamidlist.append(friendlist[i]['steamid'])
 
-
 joinedsids = ','.join(steamidlist)
-
 
 
 def printFriendInfo(ids):
@@ -27,7 +24,6 @@ def printFriendInfo(ids):
     userget = requests.get(useruri).json()['response']
     for i in range(len(userget['players'])):
         print(userget['players'][i])
-
 
 
 def printOnlineFriends(ids):
@@ -64,9 +60,7 @@ def printOnlineFriends(ids):
             print(i + tspaces, "[" + onlineDict[i] + "]")
 
 
-
 printOnlineFriends(joinedsids)
-
 
 # Sorteren
 
