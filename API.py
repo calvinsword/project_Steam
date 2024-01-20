@@ -23,10 +23,12 @@ joinedsids = ','.join(steamidlist)
 
 
 def printFriendInfo(ids):
+    players_info = []
     useruri = 'http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=' + APIKEY + '&steamids=' + ids
     userget = requests.get(useruri).json()['response']
-    for i in range(len(userget['players'])):
-        print(userget['players'][i])
+    for i in range(10):
+        players_info.append(userget['players'][i])
+    return players_info
 
 
 
@@ -34,35 +36,34 @@ def printOnlineFriends(ids):
     useruri = 'http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=' + APIKEY + '&steamids=' + ids
     userget = requests.get(useruri).json()['response']
 
+    online_friends = []
     onlineDict = {}
-    global maxnamelen
     maxnamelen = 0
-    for i in range(len(userget['players'])):
-        tonli = userget['players'][i]['personastate']
+
+    players = userget.get('players', [])
+
+    for player in players:
+        tonli = player.get('personastate', 0)
+
         if tonli == 1:
-
-            if 'gameextrainfo' in userget['players'][i]:
-                sname = userget['players'][i]['personaname']
-                sgame = userget['players'][i]['gameextrainfo']
+            if 'gameextrainfo' in player:
+                sname = player['personaname']
+                sgame = player['gameextrainfo']
                 onlineDict.update({sname: sgame})
+                friend_name_game = (sname + " " + sgame)
                 if len(sname) > maxnamelen:
-                    maxnamelen = int(len(sname))
+                    maxnamelen = len(sname)
+                online_friends.append(friend_name_game)
 
-        else:
-
-            continue
     if not onlineDict:
-        print("None of your friends are currently playing a game.")
+        return ["None of your friends are currently playing a game."]
     else:
+        result_list = []
         sortDict = sorted(onlineDict.items(), key=lambda z: z[1])
         for i in sorted(onlineDict.keys()):
-
-            tspaces = ""
-            lennamediff = (maxnamelen - len(i)) + 2
-            for x in range(lennamediff):
-                tspaces += ' '
-            print(i + tspaces, "[" + onlineDict[i] + "]")
-
+            tspaces = " " * (maxnamelen - len(i) + 2)
+            result_list.append(f"{i}{tspaces}[{onlineDict[i]}]")
+        return result_list
 
 
 printOnlineFriends(joinedsids)
