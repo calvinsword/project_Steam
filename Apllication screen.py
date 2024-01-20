@@ -133,6 +133,9 @@ while running:
                             if inlogscherm:
                                 if any(existing.get('name') == username for existing in existing_data if
                                        isinstance(existing, dict)):
+                                    for x in existing_data:
+                                        if x['name'] == username:
+                                            currentSteamID = x['steam_id']
                                     inlogscherm = False
                                     mainscreen = True
 
@@ -177,7 +180,7 @@ while running:
                                         with open('valid_steamid.json', 'w') as file:
                                             existing_data.append(player_info)
                                             json.dump(existing_data, file, indent=2)
-
+                                        currentSteamID = steamidlogin
                                         registerscreen = False
                                         mainscreen = True
 
@@ -264,6 +267,9 @@ while running:
         pygame.draw.rect(screen, Black, (800, 0, 200, 30), 3)
         text = font.render("Im  Bored", False, (0, 0, 0))
         screen.blit(text, (805, 5))
+        text = font.render(f"Steam id: {currentSteamID}", False, (0, 0, 0))
+        screen.blit(text, (60, 5))
+        screen.blit(pygame.image.load("Images/Logo50x50.png", ), (0, 0))
 
     elif gamescreen:
         if Running:
@@ -363,7 +369,7 @@ while running:
         pygame.draw.rect(screen, Black, (200, 450, 340, 90), 3)
         text = font.render(f"{usernameloginerror}", False, (0, 0, 0))
         screen.blit(text, (100, 175))
-
+        screen.blit(pygame.image.load("Images/Logo125x125.png", ), (850, 10))
 
     elif registerscreen:
         text = font.render("Create a username:", False, (0, 0, 0))
@@ -393,6 +399,7 @@ while running:
         pygame.draw.rect(screen, Black, (605, 650, 340, 90), 3)
         text = font.render(f"{registerError}", False, (0, 0, 0))
         screen.blit(text, (615, 500))
+        screen.blit(pygame.image.load("Images/Logo125x125.png", ), (850, 10))
 
     pygame.time.wait(0)
     pygame.display.flip()
