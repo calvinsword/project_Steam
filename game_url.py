@@ -9,16 +9,12 @@ def get_steam_game_info_by_name(game_name):
     try:
         response = requests.get(search_url)
 
-
         if response.status_code == 200:
-
             soup = BeautifulSoup(response.text, 'html.parser')
-
 
             first_result = soup.find('a', {'class': 'search_result_row'})
 
             if first_result:
-
                 title = first_result.find('span', {'class': 'title'}).text.strip()
                 url = first_result['href']
 
@@ -26,18 +22,18 @@ def get_steam_game_info_by_name(game_name):
             else:
                 return None
         else:
-            print(f'Error: Unable to fetch the page. Status Code: {response.status_code}')
-            return None
+            return {'error': f'Unable to fetch the page. Status Code: {response.status_code}'}
+
     except Exception as e:
-        print(f'Error: {e}')
-        return None
+        return {'error': str(e)}
 
-
-game_name = input("Naam van het spel:")
+# Example usage
+game_name = input("Name of the game: ")
 game_info = get_steam_game_info_by_name(game_name)
 
-if game_info:
-    print(f"Title: {game_info['title']}")
-    print(f"URL: {game_info['url']}")
+if game_info and 'error' not in game_info:
+    result = {'title': game_info['title'], 'url': game_info['url']}
 else:
-    print(f"No information found for the game '{game_name}'.")
+    result = {'error': f"No information found for the game '{game_name}'."}
+
+print(result)

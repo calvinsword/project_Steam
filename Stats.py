@@ -1,7 +1,7 @@
 import json
 import statistics
 
-print("""All Possible Genres:
+ALL_GENRES = """All Possible Genres:
 Accounting
 Action
 Adventure
@@ -31,34 +31,38 @@ Utilities
 Video Production
 Violent
 Web Publishing
-""")
-
+"""
 
 def read_json_file(file_path):
     with open(file_path, 'r') as file:
         data = json.load(file)
     return data
 
-
 def descriptive_stats_qualitative(data, variable):
     values = data[variable].split(';') if ';' in data[variable] else [data[variable]]
-    print(f"Descriptive statistics for qualitative variable '{variable}':")
-    print(f"Categories: {', '.join(values)}")
-    print(f"Number of categories: {len(values)}")
-
+    result = {
+        "variable": variable,
+        "categories": values,
+        "num_categories": len(values)
+    }
+    return result
 
 def descriptive_stats_quantitative(data, variable):
     values = [data[variable]]  # Wrap the integer in a list
-    print(f"\nDescriptive statistics for quantitative variable '{variable}':")
-    print(f"Mean: {statistics.mean(values)}")
-    print(f"Median: {statistics.median(values)}")
+    result = {
+        "variable": variable,
+        "mean": statistics.mean(values),
+        "median": statistics.median(values)
+    }
 
     if len(values) >= 2:
-        print(f"Variance: {statistics.variance(values)}")
-        print(f"Standard Deviation: {statistics.stdev(values)}")
+        result["variance"] = statistics.variance(values)
+        result["std_dev"] = statistics.stdev(values)
     else:
-        print("Variance and Standard Deviation cannot be calculated with a single data point.")
+        result["variance"] = None
+        result["std_dev"] = None
 
+    return result
 
 def top_games_in_genre(data, genre, int_owners=50000, n=5):
     genre_lower = genre.lower()
@@ -71,11 +75,17 @@ def top_games_in_genre(data, genre, int_owners=50000, n=5):
                           key=lambda x: x["positive_ratings"] / (x["positive_ratings"] + x["negative_ratings"]),
                           reverse=True)
 
-    print(f"\nTop {n} games in the genre '{genre}' with at least {int_owners} owners based on % of positive ratings:")
+    result = []
     for i, game in enumerate(sorted_games[:n], start=1):
         positive_percentage = (game["positive_ratings"] / (game["positive_ratings"] + game["negative_ratings"])) * 100
-        print(f"{i}. {game['name']} - Positive Percentage: {positive_percentage:.2f}% - Owners: {game['owners']}")
+        result.append({
+            "rank": i,
+            "name": game['name'],
+            "positive_percentage": positive_percentage,
+            "owners": game['owners']
+        })
 
+    return result
 
 if __name__ == "__main__":
     file_path = "steam.json"
@@ -94,4 +104,7 @@ if __name__ == "__main__":
             int_owners = 50000
 
     user_genre = input("\nEnter a genre to find the top 5 games (case-insensitive): ")
-    top_games_in_genre(game_data, user_genre)
+    result = top_games_in_genre(game_data, user_genre)
+    for game in result:
+        print(f"{game['rank']}. {game['name']} - Positive Percentage: {game['positive_percentage']:.2f}% - Owners: {game['owners']}")
+        game_result = (f"{game['rank']}. {game['name']} - Positive Percentage: {game['positive_percentage']:.2f}% - Owners: {game['owners']}")
