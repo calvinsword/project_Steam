@@ -32,6 +32,8 @@ Video Production
 Violent
 Web Publishing
 """)
+
+
 def read_json_file(file_path):
     with open(file_path, 'r') as file:
         data = json.load(file)
@@ -64,7 +66,8 @@ def top_games_in_genre(data, genre, int_owners=50000, n=5):
                    genre_lower in game["genres"].lower().split(';') and
                    game["positive_ratings"] + game["negative_ratings"] > 0 and
                    game["positive_ratings"] < game["positive_ratings"] + game["negative_ratings"] and
-                   int(game["owners"].split('-')[0]) >= int_owners]  # Skip games with 100% positive rating and less than 50,000 owners
+                   int(game["owners"].split('-')[
+                           0]) >= int_owners]  # Skip games with 100% positive rating and less than 50,000 owners
     sorted_games = sorted(genre_games,
                           key=lambda x: x["positive_ratings"] / (x["positive_ratings"] + x["negative_ratings"]),
                           reverse=True)
@@ -74,8 +77,9 @@ def top_games_in_genre(data, genre, int_owners=50000, n=5):
         positive_percentage = (game["positive_ratings"] / (game["positive_ratings"] + game["negative_ratings"])) * 100
         print(f"{i}. {game['name']} - Positive Percentage: {positive_percentage:.2f}% - Owners: {game['owners']}")
 
+
 if __name__ == "__main__":
-    file_path = "steam.json" 
+    file_path = "steam.json"
     game_data = read_json_file(file_path)
 
     for entry in game_data:
@@ -88,7 +92,7 @@ if __name__ == "__main__":
             int_owners = int(owners)
 
         if int_owners >= 100000:
-            int_owners=50000
+            int_owners = 50000
 
     user_genre = input("\nEnter a genre to find the top 5 games (case-insensitive): ")
     top_games_in_genre(game_data, user_genre)
