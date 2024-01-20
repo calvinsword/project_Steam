@@ -18,7 +18,7 @@ def get_steam_game_info_by_name(game_name):
                 title = first_result.find('span', {'class': 'title'}).text.strip()
                 url = first_result['href']
 
-                return {'title': title, 'url': url}
+                return url
             else:
                 return None
         else:
@@ -26,14 +26,3 @@ def get_steam_game_info_by_name(game_name):
 
     except Exception as e:
         return {'error': str(e)}
-
-# Example usage
-game_name = input("Name of the game: ")
-game_info = get_steam_game_info_by_name(game_name)
-
-if game_info and 'error' not in game_info:
-    result = {'title': game_info['title'], 'url': game_info['url']}
-else:
-    result = {'error': f"No information found for the game '{game_name}'."}
-
-print(result)

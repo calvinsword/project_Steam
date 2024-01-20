@@ -17,11 +17,9 @@ Game Development
 Gore
 Indie
 Massively Multiplayer
-Nudity
 Photo Editing
 RPG
 Racing
-Sexual Content
 Simulation
 Software Training
 Sports

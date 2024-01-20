@@ -1,16 +1,19 @@
+import datetime
+import webbrowser
 import pygame
-import math
-import time
-import random
 import json
 import requests
 import passwords
+import API
+import game_url
 
 pygame.font.init()
 font = pygame.font.Font(None, 30)
-moneyfont = pygame.font.Font(None, 30)
+smallFont = pygame.font.Font(None, 25)
+bigFont = pygame.font.Font(None, 40)
 running = True
 pygame.init()
+Friends = ""
 registerError = ""
 White = 255, 255, 255
 Black = 0, 0, 0
@@ -18,22 +21,22 @@ size = width, height = 1000, 800
 screen = pygame.display.set_mode(size, )
 screen.fill(White)
 currentSteamID = 0
+FriendsScrolling = 0
+time2 = 0
+time1 = 0
 mainscreen = False
-usernameloginerror = ""
-gamescreen = False
+timerscreen = False
 registerscreen = False
-usernamelogin = True
 inlogscherm = True
+usernameloginerror = ""
 steamidlogin = ""
 SteamAPIKey = passwords.SteamAPIKey
-snake_speed = 15
 numbers = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 username = ""
 # Window size
 window_x = 1000
 window_y = 800
-Running = True
-
+usernamelogin = True
 # defining colors
 black = pygame.Color(0, 0, 0)
 white = pygame.Color(255, 255, 255)
@@ -41,81 +44,15 @@ red = pygame.Color(255, 0, 0)
 green = pygame.Color(0, 255, 0)
 blue = pygame.Color(0, 0, 255)
 grey = pygame.Color(137, 148, 153)
-
-# defining snake default position
-snake_position = [100, 50]
-
-# defining first 4 blocks of snake body
-snake_body = [[100, 50],
-              [90, 50],
-              [80, 50],
-              [70, 50]
-              ]
-# fruit position
-fruit_position = [random.randrange(1, (window_x // 10)) * 10,
-                  random.randrange(1, (window_y // 10)) * 10]
-
-fruit_spawn = True
-
-# setting default snake direction towards
-# right
-direction = 'RIGHT'
-change_to = direction
-
-# initial score
-score = 0
+timerM = 0
 
 
-def show_score(choice, color):
-    # creating font object score_font
-    score_font = moneyfont
-
-    # create the display surface object
-    # score_surface
-    score_surface = score_font.render('Score : ' + str(score), True, color)
-
-    # create a rectangular object for the text
-    # surface object
-    score_rect = score_surface.get_rect()
-
-    # displaying text
-    screen.blit(score_surface, score_rect)
-    pygame.draw.rect(screen, White, (800, 0, 200, 30), 3)
-    text = font.render("Go Back", False, (255, 255, 255))
-    screen.blit(text, (805, 5))
-
-
-def game_over():
-    # creating font object my_font
-    my_font = pygame.font.SysFont('times new roman', 50)
-
-    # creating a text surface on which text
-    # will be drawn
-    game_over_surface = my_font.render(
-        'Your Score is : ' + str(score), True, red)
-
-    # create a rectangular object for the text
-    # surface object
-    game_over_rect = game_over_surface.get_rect()
-
-    # setting position of the text
-    game_over_rect.midtop = (window_x / 2, window_y / 4)
-
-    # blit will draw the text on screen
-    screen.blit(game_over_surface, game_over_rect)
-    pygame.display.flip()
-
-    # after 2 seconds we will quit the program
-    pygame.draw.rect(screen, White, (800, 0, 200, 30), 3)
-    text = font.render("Go Back", False, (255, 255, 255))
-    screen.blit(text, (805, 5))
-
-    # deactivating pygame library
-    # quit the program
+def openWebsite(nameOfTheGame):
+    gameurl = game_url.get_steam_game_info_by_name(nameOfTheGame)
+    webbrowser.open(gameurl)
 
 
 while running:
-    time1 = time.time()
     if inlogscherm or registerscreen:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -124,7 +61,6 @@ while running:
                 if event.type == pygame.KEYDOWN:
                     if usernamelogin:
                         if event.key == pygame.K_RETURN:
-                            print(username)
                             existing_data = []
                             try:
                                 with open('valid_steamid.json', 'r') as file:
@@ -145,7 +81,8 @@ while running:
                             elif registerscreen:
                                 usernamelogin = False
                             else:
-                                usernameloginerror = "This username is not know, please try again or register via the button below"
+                                usernameloginerror = "This username is not know, please try again or register via " \
+                                                     "the button below"
 
                         elif event.key == pygame.K_BACKSPACE:
                             username = username[:-1]
@@ -153,7 +90,8 @@ while running:
                             username += event.unicode
                     if not usernamelogin:
                         if event.key == pygame.K_RETURN:
-                            api_url = f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key={SteamAPIKey}&steamids={steamidlogin}'
+                            api_url = f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?' \
+                                      f'key={SteamAPIKey}&steamids={steamidlogin}'
 
                             try:
                                 response = requests.get(api_url)
@@ -188,9 +126,11 @@ while running:
                                     else:
                                         registerError = "This steamID is not valid"
                                 else:
-                                    registerError = "The API has given an unexpected response, try again. If the error persists please contact the developers"
+                                    registerError = "The API has given an unexpected response, try again. If the " \
+                                                    "error persists please contact the developers"
                             except requests.RequestException as e:
-                                registerError = "Unfortunatly we are not able to connect to the steam API at this moment"
+                                registerError = "Unfortunatly we are not able to connect to the steam API at this " \
+                                                "moment"
 
                         elif event.key == pygame.K_BACKSPACE:
                             steamidlogin = steamidlogin[:-1]
@@ -212,148 +152,115 @@ while running:
                             registerscreen = False
 
                 elif test[1]:  # true if middle click
-                    print("yay")
+                    continue
                 elif test[2]:  # true if right click
-                    print("yay")
+                    continue
                 else:  # if scroll wheel is activated
-                    print('nah')
+                    continue
     else:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 quit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_e:
-                    print("")
-                if gamescreen:
-                    if event.key == pygame.K_UP:
-                        change_to = 'UP'
-                    if event.key == pygame.K_DOWN:
-                        change_to = 'DOWN'
-                    if event.key == pygame.K_LEFT:
-                        change_to = 'LEFT'
-                    if event.key == pygame.K_RIGHT:
-                        change_to = 'RIGHT'
-                    if change_to == 'UP' and direction != 'DOWN':
-                        direction = 'UP'
-                    if change_to == 'DOWN' and direction != 'UP':
-                        direction = 'DOWN'
-                    if change_to == 'LEFT' and direction != 'RIGHT':
-                        direction = 'LEFT'
-                    if change_to == 'RIGHT' and direction != 'LEFT':
-                        direction = 'RIGHT'
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            elif event.type == pygame.KEYDOWN:
+                continue
+            elif event.type == pygame.MOUSEBUTTONDOWN:
                 test = pygame.mouse.get_pressed(num_buttons=3)
                 if test[0]:  # true if left click
                     mousepos = pygame.mouse.get_pos()
                     mousey = int(mousepos[0])
                     mousex = int(mousepos[1])
                     if mainscreen:
-                        if 1000 > mousey > 800 and 30 > mousex > 0:
+                        if 400 > mousey > 0 and 705 > mousex > 655:
+                            openWebsite(Friends[FriendsScrolling % len(Friends)][1])
+                        elif 400 > mousey > 0 and 755 > mousex > 705:
+                            openWebsite(Friends[(FriendsScrolling + 1) % len(Friends)][1])
+                        elif 400 > mousey > 0 and 805 > mousex > 755:
+                            openWebsite(Friends[(FriendsScrolling + 2) % len(Friends)][1])
+                        elif 1000 > mousey > 935 and 30 > mousex > 0:
+                            timerscreen = True
                             mainscreen = False
-                            gamescreen = True
-                    elif gamescreen:
-                        if 1000 > mousey > 800 and 30 > mousex > 0:
+                    elif timerscreen:
+                        if 250 > mousex > 200:
+                            if mousey < 200:
+                                timerM += 1
+                            elif mousey > 800:
+                                timerM += 30
+                            elif 600 > mousey > 400:
+                                timerM += 5
+                        elif 320 > mousex > 270:
+                            if mousey < 200 and timerM >= 1:
+                                timerM -= 1
+                            if mousey > 800 and timerM >= 30:
+                                timerM -= 30
+                            if 600 > mousey > 400 and timerM >= 5:
+                                timerM -= 5
+                        elif 455 > mousex > 380:
+                            if 600 > mousey > 400:
+                                registerError = ""
+                                if timerM <= 0:
+                                    registerError = "The time must be more then 0 minutes"
+                                else:
+                                    registerError = "The timer functionality hasn't been added yet"
+                            elif 200 > mousey:
+                                timerM = 0
+
+                        elif 1000 > mousey > 935 and 30 > mousex > 0:
                             mainscreen = True
-                            gamescreen = False
+                            timerscreen = False
+
+                        elif 600 > mousey > 400 and 455 > mousex > 380:
+                            timerM = 0
 
                 elif test[1]:  # true if middle click
-                    print("yay")
+                    continue
                 elif test[2]:  # true if right click
-                    print("yay")
+                    continue
                 else:  # if scroll wheel is activated
-                    print('nah')
+                    FriendsScrolling += 1
 
     screen.fill(grey)
+
     if mainscreen:
-        pygame.draw.rect(screen, Black, (800, 0, 200, 30), 3)
-        text = font.render("Im  Bored", False, (0, 0, 0))
-        screen.blit(text, (805, 5))
         text = font.render(f"Steam id: {currentSteamID}", False, (0, 0, 0))
         screen.blit(text, (60, 5))
         screen.blit(pygame.image.load("Images/Logo50x50.png", ), (0, 0))
-
-    elif gamescreen:
-        if Running:
-            screen.fill(black)
-            pygame.init()
-
-            # Initialise game window
-            pygame.display.set_caption("Gamer Snake")
-            game_window = pygame.display.set_mode((window_x, window_y))
-
-            # FPS (frames per second) controller
-            fps = pygame.time.Clock()
-
-            # If two keys pressed simultaneously
-            # we don't want snake to move into two
-            # directions simultaneously
-            if change_to == 'UP' and direction != 'DOWN':
-                direction = 'UP'
-            if change_to == 'DOWN' and direction != 'UP':
-                direction = 'DOWN'
-            if change_to == 'LEFT' and direction != 'RIGHT':
-                direction = 'LEFT'
-            if change_to == 'RIGHT' and direction != 'LEFT':
-                direction = 'RIGHT'
-
-            # Moving the snake
-            if direction == 'UP':
-                snake_position[1] -= 10
-            if direction == 'DOWN':
-                snake_position[1] += 10
-            if direction == 'LEFT':
-                snake_position[0] -= 10
-            if direction == 'RIGHT':
-                snake_position[0] += 10
-
-            # Snake body growing mechanism
-            # if fruits and snakes collide then scores
-            # will be incremented by 10
-            snake_body.insert(0, list(snake_position))
-            if snake_position[0] == fruit_position[0] and snake_position[1] == fruit_position[1]:
-                score += 10
-                fruit_spawn = False
-            else:
-                snake_body.pop()
-
-            if not fruit_spawn:
-                fruit_position = [random.randrange(1, (window_x // 10)) * 10,
-                                  random.randrange(50, (window_y // 10)) * 10]
-
-            fruit_spawn = True
-
-            for pos in snake_body:
-                pygame.draw.rect(screen, green,
-                                 pygame.Rect(pos[0], pos[1], 10, 10))
-            pygame.draw.rect(game_window, white, pygame.Rect(
-                fruit_position[0], fruit_position[1], 10, 10))
-
-            # Game Over conditions
-            if snake_position[0] < 0 or snake_position[0] > window_x - 10:
-                game_over()
-                Running = False
-            if snake_position[1] < 0 or snake_position[1] > window_y - 10:
-                game_over()
-                Running = False
-
-            # Touching the snake body
-            for block in snake_body[1:]:
-                if snake_position[0] == block[0] and snake_position[1] == block[1]:
-                    game_over()
-
-            # displaying score continuously
-            show_score(1, white)
-
-            # Refresh game screen
-            pygame.display.update()
-
-            # Frame Per Second /Refresh Rate
-            fps.tick(snake_speed)
+        text = font.render("Timer", False, (0, 0, 0))
+        screen.blit(text, (940, 5))
+        pygame.draw.rect(screen, Black, (935, 0, 65, 30), 3)
+        text = bigFont.render("The best games on steam", False, (0, 0, 0))
+        screen.blit(text, (500, 750))
+        pygame.draw.rect(screen, Black, (450, 725, 450, 75), 3)
+        time2 = datetime.datetime.now().timestamp() - time1
+        if time2 > 5:
+            time1 = datetime.datetime.now().timestamp()
+            Friends2 = API.printOnlineFriends(SteamAPIKey, currentSteamID)
+            if Friends2 != Friends:
+                Friends = Friends2
+        Friends = [["testuser1", "Rounds"], ["testuser2", "Bitburner"],
+                   ["testuser3", "Paladins"], ["testuser4", "Runescape"]]
+        if not Friends:
+            text = font.render("None of your friends are currently using steam", False, (0, 0, 0))
+            screen.blit(text, (0, 630))
         else:
-            screen.fill(black)
-            pygame.draw.rect(screen, White, (800, 0, 200, 30), 3)
-            text = font.render("Go Back", False, (255, 255, 255))
-            screen.blit(text, (805, 5))
+            text = font.render("Your friends are playing:", False, (0, 0, 0))
+            screen.blit(text, (0, 630))
+            text = smallFont.render(f"{Friends[FriendsScrolling % len(Friends)][0]}: ", False, (0, 0, 0))
+            screen.blit(text, (5, 660))
+            text = smallFont.render(f"{Friends[FriendsScrolling % len(Friends)][1]} ", False, (0, 0, 0))
+            screen.blit(text, (5, 680))
+            pygame.draw.rect(screen, Black, (0, 655, 400, 50), 3)
+            if len(Friends) > 1:
+                text = smallFont.render(f"{Friends[(FriendsScrolling + 1) % len(Friends)][0]}: ", False, (0, 0, 0))
+                screen.blit(text, (5, 710))
+                text = smallFont.render(f"{Friends[(FriendsScrolling + 1) % len(Friends)][1]} ", False, (0, 0, 0))
+                screen.blit(text, (5, 730))
+                pygame.draw.rect(screen, Black, (0, 705, 400, 50), 3)
+            if len(Friends) > 2:
+                text = smallFont.render(f"{Friends[(FriendsScrolling + 2) % len(Friends)][0]}: ", False, (0, 0, 0))
+                screen.blit(text, (5, 760))
+                text = smallFont.render(f"{Friends[(FriendsScrolling + 2) % len(Friends)][1]} ", False, (0, 0, 0))
+                screen.blit(text, (5, 780))
+                pygame.draw.rect(screen, Black, (0, 755, 400, 50), 3)
 
     elif inlogscherm:
         text = font.render("Login with your application Username", False, (0, 0, 0))
@@ -402,5 +309,51 @@ while running:
         screen.blit(text, (615, 500))
         screen.blit(pygame.image.load("Images/Logo125x125.png", ), (850, 10))
 
+    elif timerscreen:
+        screen.blit(pygame.image.load("Images/Logo50x50.png", ), (0, 0))
+        text = font.render("Back", False, (0, 0, 0))
+        screen.blit(text, (940, 5))
+        pygame.draw.rect(screen, Black, (935, 0, 65, 30), 3)
+        text = bigFont.render(f"The timer is set to {timerM} minutes", False, (0, 0, 0))
+        screen.blit(text, (350, 100))
+
+        text = font.render("+1 Min", False, (0, 0, 0))
+        screen.blit(text, (68, 215))
+        pygame.draw.rect(screen, Black, (0, 200, 200, 50), 3)
+
+        text = font.render("-1 Min", False, (0, 0, 0))
+        screen.blit(text, (72, 285))
+        pygame.draw.rect(screen, Black, (0, 270, 200, 50), 3)
+
+        text = font.render("+5 Min", False, (0, 0, 0))
+        screen.blit(text, (468, 215))
+        pygame.draw.rect(screen, Black, (400, 200, 200, 50), 3)
+
+        text = font.render("-5 Min", False, (0, 0, 0))
+        screen.blit(text, (472, 285))
+        pygame.draw.rect(screen, Black, (400, 270, 200, 50), 3)
+
+        text = font.render("+30 Min", False, (0, 0, 0))
+        screen.blit(text, (866, 215))
+        pygame.draw.rect(screen, Black, (800, 200, 200, 50), 3)
+
+        text = font.render("-30 Min", False, (0, 0, 0))
+        screen.blit(text, (870, 285))
+        pygame.draw.rect(screen, Black, (800, 270, 200, 50), 3)
+
+        text = bigFont.render("Start Timer", False, (0, 0, 0))
+        screen.blit(text, (428, 400))
+        pygame.draw.rect(screen, Black, (400, 380, 200, 75), 3)
+
+        text = bigFont.render("Reset Timer", False, (0, 0, 0))
+        screen.blit(text, (23, 400))
+        pygame.draw.rect(screen, Black, (000, 380, 200, 75), 3)
+
+        text = bigFont.render(f"{registerError}", False, (0, 0, 0))
+        screen.blit(text, (23, 600))
+
     pygame.time.wait(0)
     pygame.display.flip()
+
+# TODO Separate page for top games /statistics (27 genres)
+# TODO Timer met hardware
