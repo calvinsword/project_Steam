@@ -11,7 +11,7 @@ def read_serial(port):
 
 serial_ports = list_ports.comports()
 
-pico_port = serial_ports[3].device
+pico_port = serial_ports[0].device
 
 # Open a connection to the Pico
 with serial.Serial(port=pico_port, baudrate=115200, bytesize=8, parity='N', stopbits=1, timeout=1) as serial_port:

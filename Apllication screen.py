@@ -6,6 +6,9 @@ import requests
 import passwords
 import API
 import game_url
+from serial.tools import list_ports
+import serial
+
 
 pygame.font.init()
 font = pygame.font.Font(None, 30)
@@ -200,7 +203,28 @@ while running:
                                 if timerM <= 0:
                                     registerError = "The time must be more then 0 minutes"
                                 else:
-                                    registerError = "The timer functionality hasn't been added yet"
+                                    registerError = "The timer has started"
+
+
+                                    def read_serial(port):
+                                        line = port.read(1000)
+                                        return line.decode()
+
+
+                                    serial_ports = list_ports.comports()
+
+                                    pico_port = serial_ports[0].device
+
+                                    # Open a connection to the Pico
+                                    with serial.Serial(port=pico_port, baudrate=115200, bytesize=8, parity='N',
+                                                       stopbits=1, timeout=1) as serial_port:
+                                        time_in_seconds = (timerM * 60)
+
+                                        time_in_seconds_pico_acceptable = str(time_in_seconds) + "\r"
+                                        serial_port.write(time_in_seconds_pico_acceptable.encode())
+                                        pico_output = read_serial(serial_port)
+                                    serial_port.close()
+
                             elif 200 > mousey:
                                 timerM = 0
 
