@@ -2,17 +2,14 @@ import time
 from machine import I2C, Pin
 from pico_i2c_lcd import I2cLcd
 import neopixel
-
-# haalt hopelijk de nieuwste input op
-# timer_lengte = input()
-# timerLengte = int(timer_lengte)
+from random import randint
 
 
 # initialisatie neopixel
 np = neopixel.NeoPixel(Pin(13), 8)
 
-# bepaalt welk patroon wordt afgespeeld op de neopixel
-patroon = 4
+# declaratie patroon voor neopixel
+patroon = int()
 
 current_time = time.time()
 wait_time = 0.5
@@ -37,7 +34,7 @@ def timer():
         return True
 
 
-def toggle_buzzer(iter_num):
+def neopixel_patroon(iter_num):
     kleuren = [
         [255, 0, 0],
         [255, 255, 0],
@@ -48,32 +45,32 @@ def toggle_buzzer(iter_num):
     ]
 
     if patroon == 1:
-        np[iter_num % 8] = kleuren[huidige_kleur_bepalen(iter_num)]
+        np[iter_num % 8] = kleuren[neopixel_kleuren_bepalen(iter_num)]
         np.write()
 
     elif patroon == 2:
         led_nmr = iter_num % 8
         led_nmr_neg = -led_nmr - 1
-        np[led_nmr] = kleuren[huidige_kleur_bepalen(iter_num)]
-        np[led_nmr_neg] = kleuren[huidige_kleur_bepalen((iter_num + 24))]
+        np[led_nmr] = kleuren[neopixel_kleuren_bepalen(iter_num)]
+        np[led_nmr_neg] = kleuren[neopixel_kleuren_bepalen((iter_num + 24))]
         np.write()
 
     elif patroon == 3:
         led_nmr = iter_num % 4
         led_nmr_neg = -led_nmr - 1
-        np[led_nmr] = kleuren[huidige_kleur_bepalen(iter_num)]
-        np[led_nmr_neg] = kleuren[huidige_kleur_bepalen((iter_num + 12))]
+        np[led_nmr] = kleuren[neopixel_kleuren_bepalen(iter_num)]
+        np[led_nmr_neg] = kleuren[neopixel_kleuren_bepalen((iter_num + 12))]
         np.write()
 
     elif patroon == 4:
         led_nmr = iter_num % 8
         led_nmr_2 = led_nmr + 1
-        np[led_nmr] = kleuren[huidige_kleur_bepalen(iter_num)]
-        np[led_nmr_2] = kleuren[huidige_kleur_bepalen(iter_num)]
+        np[led_nmr] = kleuren[neopixel_kleuren_bepalen(iter_num)]
+        np[led_nmr_2] = kleuren[neopixel_kleuren_bepalen(iter_num)]
         np.write()
 
 
-def huidige_kleur_bepalen(iter_num):
+def neopixel_kleuren_bepalen(iter_num):
     if patroon == 1:
         kleur_num = iter_num // 8
         kleur_num -= 3 * (kleur_num // 3)
@@ -117,6 +114,9 @@ def countdown_lcd(timerLengte):
         time.sleep(1)
 
     if timerLengte == 0:
+        global patroon
+        patroon = randint(0, 4)
+
         iter_num = 0
         I2C_ADDR = i2c.scan()[0]
         lcd = I2cLcd(i2c, I2C_ADDR, 2, 16)
@@ -133,7 +133,7 @@ def countdown_lcd(timerLengte):
                 np.write()
                 break
             elif timer():
-                toggle_buzzer(iter_num)
+                neopixel_patroon(iter_num)
                 iter_num += 1
                 if patroon == 4:
                     iter_num += 1
