@@ -8,7 +8,7 @@ import API
 import game_url
 from serial.tools import list_ports
 import serial
-
+import Statistics
 
 pygame.font.init()
 font = pygame.font.Font(None, 30)
@@ -29,9 +29,13 @@ time2 = 0
 time1 = 0
 mainscreen = False
 timerscreen = False
+bestGame = False
 registerscreen = False
 inlogscherm = True
+displaytop5games = False
 usernameloginerror = ""
+bestgamesArray = ""
+bestgamegenre = ""
 steamidlogin = ""
 SteamAPIKey = passwords.SteamAPIKey
 numbers = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
@@ -182,6 +186,9 @@ while running:
                         elif 1000 > mousey > 935 and 30 > mousex > 0:
                             timerscreen = True
                             mainscreen = False
+                        elif 900 > mousey > 450 and 800 > mousex > 725:
+                            bestGame = True
+                            mainscreen = False
                     elif timerscreen:
                         if 250 > mousex > 200:
                             if mousey < 200:
@@ -234,7 +241,59 @@ while running:
 
                         elif 600 > mousey > 400 and 455 > mousex > 380:
                             timerM = 0
-
+                    elif bestGame:
+                        bestgamegenre = ""
+                        if 1000 > mousey > 935 and 30 > mousex > 0:
+                            mainscreen = True
+                            bestGame = False
+                        if mousey < 200:
+                            if 100 > mousex > 50:
+                                bestgamegenre = "Action"
+                            if 200 > mousex > 150:
+                                bestgamegenre = "Adventure"
+                            if 300 > mousex > 250:
+                                bestgamegenre = "Animation & modeling"
+                            if 400 > mousex > 350:
+                                bestgamegenre = "Casual"
+                            if 500 > mousex > 450:
+                                bestgamegenre = "Design & illustration"
+                            if 600 > mousex > 550:
+                                bestgamegenre = "Education"
+                        if 600 > mousey > 400:
+                            if 100 > mousex > 50:
+                                bestgamegenre = "Indie"
+                            if 200 > mousex > 150:
+                                bestgamegenre = "Massively Multiplayer"
+                            if 300 > mousex > 250:
+                                bestgamegenre = "RPG"
+                            if 400 > mousex > 350:
+                                bestgamegenre = "Racing"
+                            if 500 > mousex > 450:
+                                bestgamegenre = "Simulation"
+                            if 600 > mousex > 550:
+                                bestgamegenre = "Software training"
+                        if 1000 > mousey > 800:
+                            if 100 > mousex > 50:
+                                bestgamegenre = "Sports"
+                            if 200 > mousex > 150:
+                                bestgamegenre = "Strategy"
+                            if 300 > mousex > 250:
+                                bestgamegenre = "Utilities"
+                            if 400 > mousex > 350:
+                                bestgamegenre = "Video production"
+                            if 500 > mousex > 450:
+                                bestgamegenre = "Violent"
+                            if 600 > mousex > 550:
+                                bestgamegenre = "Web publishing"
+                        if bestgamegenre != "":
+                            bestgamesArray = Statistics.top_games_in_genre(Statistics.read_json_file("steam.json"),
+                                                                           bestgamegenre)
+                            bestGame = False
+                            displaytop5games = True
+                    elif displaytop5games:
+                        if 1000 > mousey > 935 and 30 > mousex > 0:
+                            displaytop5games = False
+                            bestGame = True
                 elif test[1]:  # true if middle click
                     continue
                 elif test[2]:  # true if right click
@@ -376,8 +435,111 @@ while running:
         text = bigFont.render(f"{registerError}", False, (0, 0, 0))
         screen.blit(text, (23, 600))
 
+    elif bestGame:
+        text = font.render("Back", False, (0, 0, 0))
+        screen.blit(text, (940, 5))
+        pygame.draw.rect(screen, Black, (935, 0, 65, 30), 3)
+
+        text = bigFont.render("Choose a genre", False, (0, 0, 0))
+        screen.blit(text, (0, 0))
+
+        text = bigFont.render("Action", False, (0, 0, 0))
+        screen.blit(text, (5, 55))
+        pygame.draw.rect(screen, Black, (0, 50, 200, 50), 3)
+
+        text = bigFont.render("Adventure", False, (0, 0, 0))
+        screen.blit(text, (5, 155))
+        pygame.draw.rect(screen, Black, (0, 150, 200, 50), 3)
+
+        text = bigFont.render("Animation", False, (0, 0, 0))
+        screen.blit(text, (5, 255))
+        pygame.draw.rect(screen, Black, (0, 250, 200, 50), 3)
+
+        text = bigFont.render("Casual", False, (0, 0, 0))
+        screen.blit(text, (5, 355))
+        pygame.draw.rect(screen, Black, (0, 350, 200, 50), 3)
+
+        text = bigFont.render("Design", False, (0, 0, 0))
+        screen.blit(text, (5, 455))
+        pygame.draw.rect(screen, Black, (0, 450, 200, 50), 3)
+
+        text = bigFont.render("Education", False, (0, 0, 0))
+        screen.blit(text, (5, 555))
+        pygame.draw.rect(screen, Black, (0, 550, 200, 50), 3)
+
+        text = bigFont.render("Indie", False, (0, 0, 0))
+        screen.blit(text, (405, 55))
+        pygame.draw.rect(screen, Black, (400, 50, 200, 50), 3)
+
+        text = bigFont.render("MMO", False, (0, 0, 0))
+        screen.blit(text, (405, 155))
+        pygame.draw.rect(screen, Black, (400, 150, 200, 50), 3)
+
+        text = bigFont.render("RPG", False, (0, 0, 0))
+        screen.blit(text, (405, 255))
+        pygame.draw.rect(screen, Black, (400, 250, 200, 50), 3)
+
+        text = bigFont.render("Racing", False, (0, 0, 0))
+        screen.blit(text, (405, 355))
+        pygame.draw.rect(screen, Black, (400, 350, 200, 50), 3)
+
+        text = bigFont.render("Simulation", False, (0, 0, 0))
+        screen.blit(text, (405, 455))
+        pygame.draw.rect(screen, Black, (400, 450, 200, 50), 3)
+
+        text = bigFont.render("Software", False, (0, 0, 0))
+        screen.blit(text, (405, 555))
+        pygame.draw.rect(screen, Black, (400, 550, 200, 50), 3)
+
+        text = bigFont.render("Sports", False, (0, 0, 0))
+        screen.blit(text, (805, 55))
+        pygame.draw.rect(screen, Black, (800, 50, 200, 50), 3)
+
+        text = bigFont.render("Strategy", False, (0, 0, 0))
+        screen.blit(text, (805, 155))
+        pygame.draw.rect(screen, Black, (800, 150, 200, 50), 3)
+
+        text = bigFont.render("Utilities", False, (0, 0, 0))
+        screen.blit(text, (805, 255))
+        pygame.draw.rect(screen, Black, (800, 250, 200, 50), 3)
+
+        text = bigFont.render("Video Prod", False, (0, 0, 0))
+        screen.blit(text, (805, 355))
+        pygame.draw.rect(screen, Black, (800, 350, 200, 50), 3)
+
+        text = bigFont.render("Violent", False, (0, 0, 0))
+        screen.blit(text, (805, 455))
+        pygame.draw.rect(screen, Black, (800, 450, 200, 50), 3)
+
+        text = bigFont.render("Web", False, (0, 0, 0))
+        screen.blit(text, (805, 555))
+        pygame.draw.rect(screen, Black, (800, 550, 200, 50), 3)
+
+    elif displaytop5games:
+        text = font.render("Back", False, (0, 0, 0))
+        screen.blit(text, (940, 5))
+        pygame.draw.rect(screen, Black, (935, 0, 65, 30), 3)
+
+        text = bigFont.render(f"These are the top 5 games of the genre: {bestgamegenre}", False, (0, 0, 0))
+        screen.blit(text, (5, 55))
+
+        text = bigFont.render(bestgamesArray[0], False, (0, 0, 0))
+        screen.blit(text, (5, 155))
+
+        text = bigFont.render(bestgamesArray[1], False, (0, 0, 0))
+        screen.blit(text, (5, 255))
+
+        text = bigFont.render(bestgamesArray[2], False, (0, 0, 0))
+        screen.blit(text, (5, 355))
+
+        text = bigFont.render(bestgamesArray[3], False, (0, 0, 0))
+        screen.blit(text, (5, 455))
+
+        text = bigFont.render(bestgamesArray[4], False, (0, 0, 0))
+        screen.blit(text, (5, 555))
+
     pygame.time.wait(0)
     pygame.display.flip()
 
 # TODO Separate page for top games /statistics (27 genres)
-# TODO Timer met hardware
+# TODO playtime track /playtime_check

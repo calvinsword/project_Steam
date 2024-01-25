@@ -2,29 +2,20 @@ import json
 import statistics
 
 print("""All Possible Genres:
-Accounting
 Action
 Adventure
 Animation & Modeling
-Audio Production
 Casual
 Design & Illustration
-Documentary
-Early Access
 Education
-Free to Play
-Game Development
-Gore
 Indie
 Massively Multiplayer
-Photo Editing
 RPG
 Racing
 Simulation
 Software Training
 Sports
 Strategy
-Tutorial
 Utilities
 Video Production
 Violent
@@ -69,10 +60,11 @@ def top_games_in_genre(data, genre, int_owners=50000, n=5):
                           key=lambda x: x["positive_ratings"] / (x["positive_ratings"] + x["negative_ratings"]),
                           reverse=True)
 
-    print(f"\nTop {n} games in the genre '{genre}' with at least {int_owners} owners based on % of positive ratings:")
+    array = []
     for i, game in enumerate(sorted_games[:n], start=1):
         positive_percentage = (game["positive_ratings"] / (game["positive_ratings"] + game["negative_ratings"])) * 100
-        print(f"{i}. {game['name']} - Positive Percentage: {positive_percentage:.2f}% - Owners: {game['owners']}")
+        array.append(f"{i}. {game['name']} - Positive Percentage: {positive_percentage:.2f}%")
+    return array
 
 
 if __name__ == "__main__":
@@ -93,3 +85,4 @@ if __name__ == "__main__":
 
     user_genre = input("\nEnter a genre to find the top 5 games (case-insensitive): ")
     top_games_in_genre(game_data, user_genre)
+
