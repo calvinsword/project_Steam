@@ -4,15 +4,24 @@ from pico_i2c_lcd import I2cLcd
 import neopixel
 from random import randint
 
-
 # initialisatie neopixel
 np = neopixel.NeoPixel(Pin(13), 8)
 
 # declaratie patroon voor neopixel
 patroon = int()
 
+# alle kleuren voor de neopixel
+kleuren = [
+    [255, 0, 0],
+    [255, 255, 0],
+    [0, 255, 0],
+    [0, 255, 255],
+    [0, 0, 255],
+    [255, 0, 255]
+]
+
+# declaratie current time
 current_time = time.time()
-wait_time = 0.5
 
 # pin designation
 buzzer_pin = Pin(20, Pin.OUT)
@@ -27,7 +36,7 @@ def timer_ophalen():
     return timerLengte
 
 
-def timer():
+def timer(wait_time):
     global current_time
     if time.time() - current_time > wait_time:
         current_time = time.time()
@@ -35,15 +44,6 @@ def timer():
 
 
 def neopixel_patroon(iter_num):
-    kleuren = [
-        [255, 0, 0],
-        [255, 255, 0],
-        [0, 255, 0],
-        [0, 255, 255],
-        [0, 0, 255],
-        [255, 0, 255]
-    ]
-
     if patroon == 1:
         np[iter_num % 8] = kleuren[neopixel_kleuren_bepalen(iter_num)]
         np.write()
@@ -102,16 +102,18 @@ def timer_format(timerLengte):
 
 
 def countdown_lcd(timerLengte):
-
     while timerLengte > 0:
-        I2C_ADDR = i2c.scan()[0]
-        lcd = I2cLcd(i2c, I2C_ADDR, 2, 16)
-        lcd.move_to(4, 0)
-        lcd.putstr(timer_format(timerLengte))
-        lcd.move_to(0, 1)
-        lcd.putstr("HBLPHBL 2.0 INC.")
-        timerLengte -= 1
-        time.sleep(1)
+        if switch_pin.value():
+            timerLengte = -1
+            break
+        elif timer(0.5):
+            I2C_ADDR = i2c.scan()[0]
+            lcd = I2cLcd(i2c, I2C_ADDR, 2, 16)
+            lcd.move_to(4, 0)
+            lcd.putstr(timer_format(timerLengte))
+            lcd.move_to(0, 1)
+            lcd.putstr("HBLPHBL 2.0 INC.")
+            timerLengte -= 1
 
     if timerLengte == 0:
         global patroon
@@ -132,11 +134,19 @@ def countdown_lcd(timerLengte):
                     np[num] = [0, 0, 0]
                 np.write()
                 break
-            elif timer():
+            elif timer(0.25):
                 neopixel_patroon(iter_num)
                 iter_num += 1
+                # iter_num += 1 omdat er 2 lampjes tegelijk gaan branden
                 if patroon == 4:
                     iter_num += 1
+
+    I2C_ADDR = i2c.scan()[0]
+    lcd = I2cLcd(i2c, I2C_ADDR, 2, 16)
+    lcd.move_to(2, 0)
+    lcd.putstr("Timer ended")
+    lcd.move_to(0, 1)
+    lcd.putstr("HBLPHBL 2.0 INC.")
 
 
 while True:

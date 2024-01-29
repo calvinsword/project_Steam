@@ -12,15 +12,15 @@ def read_serial(port):
 serial_ports = list_ports.comports()
 
 # als het niet bekend is op welke poort de pico is aangesloten
-print("[INFO] Serial ports found:")
-for i, port in enumerate(serial_ports):
-    print(str(i) + ". " + str(port.device))
-
-pico_port_index = int(input("Which port is the Raspberry Pi Pico connected to? "))
-pico_port = serial_ports[pico_port_index].device
+# print("[INFO] Serial ports found:")
+# for i, port in enumerate(serial_ports):
+#     print(str(i) + ". " + str(port.device))
+#
+# pico_port_index = int(input("Which port is the Raspberry Pi Pico connected to? "))
+# pico_port = serial_ports[pico_port_index].device
 
 # als het wel bekend is welke poort het is kan je dat hardcoden
-# pico_port = serial_ports[0].device
+pico_port = serial_ports[0].device
 
 # Open a connection to the Pico
 with serial.Serial(port=pico_port, baudrate=115200, bytesize=8, parity='N', stopbits=1, timeout=1) as serial_port:
