@@ -2,6 +2,7 @@
 # -- coding: utf-8 --
 from serial.tools import list_ports
 import serial
+import time
 
 
 def read_serial(port):
@@ -24,14 +25,18 @@ pico_port = serial_ports[0].device
 
 # Open a connection to the Pico
 with serial.Serial(port=pico_port, baudrate=115200, bytesize=8, parity='N', stopbits=1, timeout=1) as serial_port:
-    while True:
+    timer_time = input("How long do you want the timer to be in seconds?: ")
+    buzzer = input("Do you want the buzzer to be on, type 'on' or 'off': ")
 
-        timer_time = int(input("How long do you want the timer to be in seconds? Type '0' to exit: "))
+    if buzzer == "on":
+        buzzer = 1
+    else:
+        buzzer = 0
 
-        if timer_time == 0:
-            serial_port.close()
-            break
-        else:
-            timer_time_str = str(timer_time) + "\r"
-            serial_port.write(timer_time_str.encode())
-            pico_output = read_serial(serial_port)
+    serial_input = str(buzzer) + "," + str(timer_time) + "\r"
+    serial_port.write(serial_input.encode())
+
+    # pico_output = read_serial(serial_port)
+    # pico_output = pico_output.replace('\r\n', ' ')
+    # print(pico_output)
+    serial_port.close()
