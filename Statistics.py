@@ -1,26 +1,25 @@
 import json
 import statistics
 
-print("""All Possible Genres:
-Action
-Adventure
-Animation & Modeling
-Casual
-Design & Illustration
-Education
-Indie
-Massively Multiplayer
-RPG
-Racing
-Simulation
-Software Training
-Sports
-Strategy
-Utilities
-Video Production
-Violent
-Web Publishing
-""")
+# print("""All Possible Genres:
+# Action
+# Adventure
+# Animation & Modeling
+# Casual
+# Design & Illustration
+# Education
+# Indie
+# Massively Multiplayer
+# RPG
+# Racing
+# Simulation
+# Software Training
+# Strategy
+# Utilities
+# Video Production
+# Violent
+# Web Publishing
+# """)
 
 
 def read_json_file(file_path):

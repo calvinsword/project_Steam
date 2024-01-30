@@ -1,4 +1,5 @@
 import datetime
+from datetime import datetime, timedelta
 import webbrowser
 import pygame
 import json
@@ -9,54 +10,111 @@ import game_url
 from serial.tools import list_ports
 import serial
 import Statistics
+import playtime_check
+import matplotlib.pyplot as plt
 
+# de setup voor de verschillende text-fonts in de GUI
 pygame.font.init()
 font = pygame.font.Font(None, 30)
 smallFont = pygame.font.Font(None, 25)
 bigFont = pygame.font.Font(None, 40)
+
+# het definiëren van kleuren voor PyGame
+white = pygame.Color(255, 255, 255)
+black = pygame.Color(0, 0, 0)
+red = pygame.Color(255, 0, 0)
+green = pygame.Color(0, 255, 0)
+blue = pygame.Color(0, 0, 255)
+grey = pygame.Color(137, 148, 153)
+
+# de start voor de loop van pygame
 running = True
 pygame.init()
-Friends = ""
-registerError = ""
-White = 255, 255, 255
-Black = 0, 0, 0
 size = width, height = 1000, 800
 screen = pygame.display.set_mode(size, )
-screen.fill(White)
+screen.fill(white)
+
+# setup van een aantal variabelen om errors te voorkomen met non declared variables
+Friends = ""
+registerError = ""
+usernameloginerror = ""
+bestgamesArray = ""
+bestgamegenre = ""
+username = ""
+steamidlogin = ""
 currentSteamID = 0
 FriendsScrolling = 0
 time2 = 0
 time1 = 0
+timerM = 0
+numbers = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+
+# neerzetten van de booleans voor de verschillende schermen
 mainscreen = False
 timerscreen = False
 bestGame = False
 registerscreen = False
 inlogscherm = True
+playtime = False
 displaytop5games = False
-usernameloginerror = ""
-bestgamesArray = ""
-bestgamegenre = ""
-steamidlogin = ""
-SteamAPIKey = passwords.SteamAPIKey
-numbers = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
-username = ""
-# Window size
-window_x = 1000
-window_y = 800
 usernamelogin = True
-# defining colors
-black = pygame.Color(0, 0, 0)
-white = pygame.Color(255, 255, 255)
-red = pygame.Color(255, 0, 0)
-green = pygame.Color(0, 255, 0)
-blue = pygame.Color(0, 0, 255)
-grey = pygame.Color(137, 148, 153)
-timerM = 0
+STEAM_API_URL = 'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/'
 
 
+# definieer een functie voor het openen van een website met de naam van een steam game
 def openWebsite(nameOfTheGame):
     gameurl = game_url.get_steam_game_info_by_name(nameOfTheGame)
     webbrowser.open(gameurl)
+
+
+def get_recent_playtime(steam_id):
+    two_weeks_ago = int((datetime.now() - timedelta(days=14)).timestamp())
+
+    params = {
+        'key': passwords.SteamAPIKey,
+        'steamid': steam_id,
+        'format': 'json',
+        'include_played_free_games': 1,
+        'include_appinfo': 1,
+        'include_free_sub': 1,
+    }
+
+    response = requests.get('http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/', params=params)
+
+    if response.status_code == 200:
+        data = response.json()
+        games = data['response']['games']
+
+        # Filter out games with playtime equal to 0 or last played before two weeks ago
+        games = [game for game in games if game['playtime_forever'] > 0 and game.get('playtime_2weeks', 0) > 0]
+
+        return games
+    else:
+        print(f"Failed to fetch playtime data. Status code: {response.status_code}")
+        return None
+
+
+def plot_playtime_graph(steam_id):
+    games = get_recent_playtime(steam_id)
+    game_names = [game['name'] for game in games]
+    playtimes = [game['playtime_2weeks'] // 60 for game in
+                 games]  # Corrected playtime calculation to use playtime_2weeks
+
+    total_playtime = sum(playtimes)
+
+    game_names.append('Total Playtime')
+    playtimes.append(total_playtime)
+
+    plt.bar(['Total Playtime'], [total_playtime], color='green')  # Total playtime on the left
+
+    # Bar chart for individual games
+    plt.bar(game_names, playtimes, color='blue')
+
+    plt.xlabel('Games')
+    plt.ylabel('Playtime (hours)')
+    plt.title('Steam Game Playtime in the Last 2 Weeks')
+    plt.xticks(rotation=45, ha='right')
+    plt.savefig("Images/Playtime.png")
 
 
 while running:
@@ -80,6 +138,7 @@ while running:
                                     for x in existing_data:
                                         if x['name'] == username:
                                             currentSteamID = x['steam_id']
+                                    plot_playtime_graph(currentSteamID)
                                     inlogscherm = False
                                     mainscreen = True
 
@@ -98,7 +157,7 @@ while running:
                     if not usernamelogin:
                         if event.key == pygame.K_RETURN:
                             api_url = f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?' \
-                                      f'key={SteamAPIKey}&steamids={steamidlogin}'
+                                      f'key={passwords.SteamAPIKey}&steamids={steamidlogin}'
 
                             try:
                                 response = requests.get(api_url)
@@ -127,6 +186,7 @@ while running:
                                             existing_data.append(player_info)
                                             json.dump(existing_data, file, indent=2)
                                         currentSteamID = steamidlogin
+                                        plot_playtime_graph(currentSteamID)
                                         registerscreen = False
                                         mainscreen = True
 
@@ -183,12 +243,22 @@ while running:
                             openWebsite(Friends[(FriendsScrolling + 1) % len(Friends)][1])
                         elif 400 > mousey > 0 and 805 > mousex > 755:
                             openWebsite(Friends[(FriendsScrolling + 2) % len(Friends)][1])
+                        elif 400 > mousey > 275 and 655 > mousex > 625:
+                            FriendsScrolling = 0
                         elif 1000 > mousey > 935 and 30 > mousex > 0:
                             timerscreen = True
                             mainscreen = False
                         elif 900 > mousey > 450 and 800 > mousex > 725:
                             bestGame = True
                             mainscreen = False
+                        elif 300 > mousey > 0 and 230 > mousex > 190:
+                            playtime = True
+                            mainscreen = False
+                    elif playtime:
+                        if 1000 > mousey > 935 and 30 > mousex > 0:
+                            plot_playtime_graph(currentSteamID)
+                            mainscreen = True
+                            playtime = False
                     elif timerscreen:
                         if 250 > mousex > 200:
                             if mousey < 200:
@@ -309,55 +379,67 @@ while running:
         screen.blit(pygame.image.load("Images/Logo50x50.png", ), (0, 0))
         text = font.render("Timer", False, (0, 0, 0))
         screen.blit(text, (940, 5))
-        pygame.draw.rect(screen, Black, (935, 0, 65, 30), 3)
+        pygame.draw.rect(screen, black, (935, 0, 65, 30), 3)
         text = bigFont.render("The best games on steam", False, (0, 0, 0))
         screen.blit(text, (500, 750))
-        pygame.draw.rect(screen, Black, (450, 725, 450, 75), 3)
-        time2 = datetime.datetime.now().timestamp() - time1
+        pygame.draw.rect(screen, black, (450, 725, 450, 75), 3)
+        text = font.render("Playtime in the past 2 weeks", False, (0, 0, 0))
+        screen.blit(text, (5, 200))
+        pygame.draw.rect(screen, black, (0, 190, 300, 40), 3)
+        time2 = datetime.now().timestamp() - time1
         if time2 > 5:
-            time1 = datetime.datetime.now().timestamp()
-            Friends2 = API.printOnlineFriends(SteamAPIKey, currentSteamID)
-            if Friends2 != Friends:
+            time1 = datetime.now().timestamp()
+            Friends2 = API.printOnlineFriends(passwords.SteamAPIKey, currentSteamID)
+            if not Friends2:
+                Friends = ["False"]
+                continue
+            elif Friends2 != Friends:
                 Friends = Friends2
-        Friends = [["testuser1", "Rounds"], ["testuser2", "Bitburner"],
-                   ["testuser3", "Paladins"], ["testuser4", "Runescape"]]
+        # Friends = [["testuser1", "Rounds"], ["testuser2", "Bitburner"],
+        # ["testuser3", "Paladins"], ["testuser4", "Runescape"]]
+        if Friends[0] == "False":
+            text = font.render("Your friends list is set to private in steam", False, (0, 0, 0))
+            screen.blit(text, (0, 660))
         if not Friends:
             text = font.render("None of your friends are currently using steam", False, (0, 0, 0))
             screen.blit(text, (0, 630))
-        else:
+        if Friends[0] != "False":
             text = font.render("Your friends are playing:", False, (0, 0, 0))
             screen.blit(text, (0, 630))
+            text = font.render("Back to Top", False, (0, 0, 0))
+            screen.blit(text, (280, 630))
+            pygame.draw.rect(screen, black, (275, 625, 125, 30), 3)
             text = smallFont.render(f"{Friends[FriendsScrolling % len(Friends)][0]}: ", False, (0, 0, 0))
             screen.blit(text, (5, 660))
             text = smallFont.render(f"{Friends[FriendsScrolling % len(Friends)][1]} ", False, (0, 0, 0))
             screen.blit(text, (5, 680))
-            pygame.draw.rect(screen, Black, (0, 655, 400, 50), 3)
+            pygame.draw.rect(screen, black, (0, 655, 400, 50), 3)
             if len(Friends) > 1:
                 text = smallFont.render(f"{Friends[(FriendsScrolling + 1) % len(Friends)][0]}: ", False, (0, 0, 0))
                 screen.blit(text, (5, 710))
                 text = smallFont.render(f"{Friends[(FriendsScrolling + 1) % len(Friends)][1]} ", False, (0, 0, 0))
                 screen.blit(text, (5, 730))
-                pygame.draw.rect(screen, Black, (0, 705, 400, 50), 3)
+                pygame.draw.rect(screen, black, (0, 705, 400, 50), 3)
             if len(Friends) > 2:
                 text = smallFont.render(f"{Friends[(FriendsScrolling + 2) % len(Friends)][0]}: ", False, (0, 0, 0))
                 screen.blit(text, (5, 760))
                 text = smallFont.render(f"{Friends[(FriendsScrolling + 2) % len(Friends)][1]} ", False, (0, 0, 0))
                 screen.blit(text, (5, 780))
-                pygame.draw.rect(screen, Black, (0, 755, 400, 50), 3)
+                pygame.draw.rect(screen, black, (0, 755, 400, 50), 3)
 
     elif inlogscherm:
         text = font.render("Login with your application Username", False, (0, 0, 0))
         screen.blit(text, (100, 50))
-        pygame.draw.rect(screen, Black, (95, 45, 400, 30), 3)
+        pygame.draw.rect(screen, black, (95, 45, 400, 30), 3)
         text = font.render(f"Username: {username}", False, (0, 0, 0))
         screen.blit(text, (100, 100))
-        pygame.draw.rect(screen, Black, (95, 95, 340, 30), 3)
+        pygame.draw.rect(screen, black, (95, 95, 340, 30), 3)
         text = font.render("If you haven't used this application before press the button below to register", False,
                            (0, 0, 0))
         screen.blit(text, (100, 225))
         text = font.render("Register", False, (0, 0, 0))
         screen.blit(text, (315, 497))
-        pygame.draw.rect(screen, Black, (200, 450, 340, 90), 3)
+        pygame.draw.rect(screen, black, (200, 450, 340, 90), 3)
         text = font.render(f"{usernameloginerror}", False, (0, 0, 0))
         screen.blit(text, (100, 175))
         screen.blit(pygame.image.load("Images/Logo125x125.png", ), (850, 10))
@@ -365,16 +447,16 @@ while running:
     elif registerscreen:
         text = font.render("Create a username:", False, (0, 0, 0))
         screen.blit(text, (100, 50))
-        pygame.draw.rect(screen, Black, (95, 45, 340, 30), 3)
+        pygame.draw.rect(screen, black, (95, 45, 340, 30), 3)
         text = font.render(f"Username: {username}", False, (0, 0, 0))
         screen.blit(text, (100, 100))
-        pygame.draw.rect(screen, Black, (95, 95, 340, 30), 3)
+        pygame.draw.rect(screen, black, (95, 95, 340, 30), 3)
         text = font.render("Add your steam ID", False, (0, 0, 0))
         screen.blit(text, (100, 150))
-        pygame.draw.rect(screen, Black, (95, 145, 340, 30), 3)
+        pygame.draw.rect(screen, black, (95, 145, 340, 30), 3)
         text = font.render(f"Steam ID: {steamidlogin}", False, (0, 0, 0))
         screen.blit(text, (100, 200))
-        pygame.draw.rect(screen, Black, (95, 195, 340, 30), 3)
+        pygame.draw.rect(screen, black, (95, 195, 340, 30), 3)
         text = font.render("To find your steam ID:", False, (0, 0, 0))
         screen.blit(text, (100, 400))
         text = font.render("1. open the steam application", False, (0, 0, 0))
@@ -387,7 +469,7 @@ while running:
         screen.blit(text, (100, 600))
         text = font.render("Go back to login", False, (0, 0, 0))
         screen.blit(text, (615, 690))
-        pygame.draw.rect(screen, Black, (605, 650, 340, 90), 3)
+        pygame.draw.rect(screen, black, (605, 650, 340, 90), 3)
         text = font.render(f"{registerError}", False, (0, 0, 0))
         screen.blit(text, (615, 500))
         screen.blit(pygame.image.load("Images/Logo125x125.png", ), (850, 10))
@@ -396,41 +478,41 @@ while running:
         screen.blit(pygame.image.load("Images/Logo50x50.png", ), (0, 0))
         text = font.render("Back", False, (0, 0, 0))
         screen.blit(text, (940, 5))
-        pygame.draw.rect(screen, Black, (935, 0, 65, 30), 3)
+        pygame.draw.rect(screen, black, (935, 0, 65, 30), 3)
         text = bigFont.render(f"The timer is set to {timerM} minutes", False, (0, 0, 0))
         screen.blit(text, (350, 100))
 
         text = font.render("+1 Min", False, (0, 0, 0))
         screen.blit(text, (68, 215))
-        pygame.draw.rect(screen, Black, (0, 200, 200, 50), 3)
+        pygame.draw.rect(screen, black, (0, 200, 200, 50), 3)
 
         text = font.render("-1 Min", False, (0, 0, 0))
         screen.blit(text, (72, 285))
-        pygame.draw.rect(screen, Black, (0, 270, 200, 50), 3)
+        pygame.draw.rect(screen, black, (0, 270, 200, 50), 3)
 
         text = font.render("+5 Min", False, (0, 0, 0))
         screen.blit(text, (468, 215))
-        pygame.draw.rect(screen, Black, (400, 200, 200, 50), 3)
+        pygame.draw.rect(screen, black, (400, 200, 200, 50), 3)
 
         text = font.render("-5 Min", False, (0, 0, 0))
         screen.blit(text, (472, 285))
-        pygame.draw.rect(screen, Black, (400, 270, 200, 50), 3)
+        pygame.draw.rect(screen, black, (400, 270, 200, 50), 3)
 
         text = font.render("+30 Min", False, (0, 0, 0))
         screen.blit(text, (866, 215))
-        pygame.draw.rect(screen, Black, (800, 200, 200, 50), 3)
+        pygame.draw.rect(screen, black, (800, 200, 200, 50), 3)
 
         text = font.render("-30 Min", False, (0, 0, 0))
         screen.blit(text, (870, 285))
-        pygame.draw.rect(screen, Black, (800, 270, 200, 50), 3)
+        pygame.draw.rect(screen, black, (800, 270, 200, 50), 3)
 
         text = bigFont.render("Start Timer", False, (0, 0, 0))
         screen.blit(text, (428, 400))
-        pygame.draw.rect(screen, Black, (400, 380, 200, 75), 3)
+        pygame.draw.rect(screen, black, (400, 380, 200, 75), 3)
 
         text = bigFont.render("Reset Timer", False, (0, 0, 0))
         screen.blit(text, (23, 400))
-        pygame.draw.rect(screen, Black, (000, 380, 200, 75), 3)
+        pygame.draw.rect(screen, black, (000, 380, 200, 75), 3)
 
         text = bigFont.render(f"{registerError}", False, (0, 0, 0))
         screen.blit(text, (23, 600))
@@ -438,87 +520,87 @@ while running:
     elif bestGame:
         text = font.render("Back", False, (0, 0, 0))
         screen.blit(text, (940, 5))
-        pygame.draw.rect(screen, Black, (935, 0, 65, 30), 3)
+        pygame.draw.rect(screen, black, (935, 0, 65, 30), 3)
 
         text = bigFont.render("Choose a genre", False, (0, 0, 0))
         screen.blit(text, (0, 0))
 
         text = bigFont.render("Action", False, (0, 0, 0))
         screen.blit(text, (5, 55))
-        pygame.draw.rect(screen, Black, (0, 50, 200, 50), 3)
+        pygame.draw.rect(screen, black, (0, 50, 200, 50), 3)
 
         text = bigFont.render("Adventure", False, (0, 0, 0))
         screen.blit(text, (5, 155))
-        pygame.draw.rect(screen, Black, (0, 150, 200, 50), 3)
+        pygame.draw.rect(screen, black, (0, 150, 200, 50), 3)
 
         text = bigFont.render("Animation", False, (0, 0, 0))
         screen.blit(text, (5, 255))
-        pygame.draw.rect(screen, Black, (0, 250, 200, 50), 3)
+        pygame.draw.rect(screen, black, (0, 250, 200, 50), 3)
 
         text = bigFont.render("Casual", False, (0, 0, 0))
         screen.blit(text, (5, 355))
-        pygame.draw.rect(screen, Black, (0, 350, 200, 50), 3)
+        pygame.draw.rect(screen, black, (0, 350, 200, 50), 3)
 
         text = bigFont.render("Design", False, (0, 0, 0))
         screen.blit(text, (5, 455))
-        pygame.draw.rect(screen, Black, (0, 450, 200, 50), 3)
+        pygame.draw.rect(screen, black, (0, 450, 200, 50), 3)
 
         text = bigFont.render("Education", False, (0, 0, 0))
         screen.blit(text, (5, 555))
-        pygame.draw.rect(screen, Black, (0, 550, 200, 50), 3)
+        pygame.draw.rect(screen, black, (0, 550, 200, 50), 3)
 
         text = bigFont.render("Indie", False, (0, 0, 0))
         screen.blit(text, (405, 55))
-        pygame.draw.rect(screen, Black, (400, 50, 200, 50), 3)
+        pygame.draw.rect(screen, black, (400, 50, 200, 50), 3)
 
         text = bigFont.render("MMO", False, (0, 0, 0))
         screen.blit(text, (405, 155))
-        pygame.draw.rect(screen, Black, (400, 150, 200, 50), 3)
+        pygame.draw.rect(screen, black, (400, 150, 200, 50), 3)
 
         text = bigFont.render("RPG", False, (0, 0, 0))
         screen.blit(text, (405, 255))
-        pygame.draw.rect(screen, Black, (400, 250, 200, 50), 3)
+        pygame.draw.rect(screen, black, (400, 250, 200, 50), 3)
 
         text = bigFont.render("Racing", False, (0, 0, 0))
         screen.blit(text, (405, 355))
-        pygame.draw.rect(screen, Black, (400, 350, 200, 50), 3)
+        pygame.draw.rect(screen, black, (400, 350, 200, 50), 3)
 
         text = bigFont.render("Simulation", False, (0, 0, 0))
         screen.blit(text, (405, 455))
-        pygame.draw.rect(screen, Black, (400, 450, 200, 50), 3)
+        pygame.draw.rect(screen, black, (400, 450, 200, 50), 3)
 
         text = bigFont.render("Software", False, (0, 0, 0))
         screen.blit(text, (405, 555))
-        pygame.draw.rect(screen, Black, (400, 550, 200, 50), 3)
+        pygame.draw.rect(screen, black, (400, 550, 200, 50), 3)
 
         text = bigFont.render("Sports", False, (0, 0, 0))
         screen.blit(text, (805, 55))
-        pygame.draw.rect(screen, Black, (800, 50, 200, 50), 3)
+        pygame.draw.rect(screen, black, (800, 50, 200, 50), 3)
 
         text = bigFont.render("Strategy", False, (0, 0, 0))
         screen.blit(text, (805, 155))
-        pygame.draw.rect(screen, Black, (800, 150, 200, 50), 3)
+        pygame.draw.rect(screen, black, (800, 150, 200, 50), 3)
 
         text = bigFont.render("Utilities", False, (0, 0, 0))
         screen.blit(text, (805, 255))
-        pygame.draw.rect(screen, Black, (800, 250, 200, 50), 3)
+        pygame.draw.rect(screen, black, (800, 250, 200, 50), 3)
 
         text = bigFont.render("Video Prod", False, (0, 0, 0))
         screen.blit(text, (805, 355))
-        pygame.draw.rect(screen, Black, (800, 350, 200, 50), 3)
+        pygame.draw.rect(screen, black, (800, 350, 200, 50), 3)
 
         text = bigFont.render("Violent", False, (0, 0, 0))
         screen.blit(text, (805, 455))
-        pygame.draw.rect(screen, Black, (800, 450, 200, 50), 3)
+        pygame.draw.rect(screen, black, (800, 450, 200, 50), 3)
 
         text = bigFont.render("Web", False, (0, 0, 0))
         screen.blit(text, (805, 555))
-        pygame.draw.rect(screen, Black, (800, 550, 200, 50), 3)
+        pygame.draw.rect(screen, black, (800, 550, 200, 50), 3)
 
     elif displaytop5games:
         text = font.render("Back", False, (0, 0, 0))
         screen.blit(text, (940, 5))
-        pygame.draw.rect(screen, Black, (935, 0, 65, 30), 3)
+        pygame.draw.rect(screen, black, (935, 0, 65, 30), 3)
 
         text = bigFont.render(f"These are the top 5 games of the genre: {bestgamegenre}", False, (0, 0, 0))
         screen.blit(text, (5, 55))
@@ -538,8 +620,14 @@ while running:
         text = bigFont.render(bestgamesArray[4], False, (0, 0, 0))
         screen.blit(text, (5, 555))
 
+    elif playtime:
+        text = font.render("Back", False, (0, 0, 0))
+        screen.blit(text, (940, 5))
+        pygame.draw.rect(screen, black, (935, 0, 65, 30), 3)
+        screen.blit(pygame.image.load("Images/Playtime.png", ), (50, 50))
+
     pygame.time.wait(0)
     pygame.display.flip()
 
-# TODO Separate page for top games /statistics (27 genres)
-# TODO playtime track /playtime_check
+# TODO pricegraph ??
+# TODO stats.py?

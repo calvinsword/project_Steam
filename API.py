@@ -11,9 +11,10 @@ STEAMID = '76561199040506358'
 
 
 def printOnlineFriends(APIKEY, STEAMID):
-
-    LINK = 'http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=' + APIKEY + '&steamid=' + str(STEAMID) + '&relationship=friend'
-
+    LINK = 'http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=' + APIKEY + '&steamid=' + str(
+        STEAMID) + '&relationship=friend'
+    if requests.get(LINK).json() == {}:
+        return False
     friendlist = requests.get(LINK).json()['friendslist']['friends']
 
     steamidlist = []
@@ -50,3 +51,5 @@ def printOnlineFriends(APIKEY, STEAMID):
             result_list.append(array)
 
         return result_list
+
+printOnlineFriends(APIKEY, 76561199143747374)
