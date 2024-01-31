@@ -28,26 +28,6 @@ def read_json_file(file_path):
     return data
 
 
-def descriptive_stats_qualitative(data, variable):
-    values = data[variable].split(';') if ';' in data[variable] else [data[variable]]
-    print(f"Descriptive statistics for qualitative variable '{variable}':")
-    print(f"Categories: {', '.join(values)}")
-    print(f"Number of categories: {len(values)}")
-
-
-def descriptive_stats_quantitative(data, variable):
-    values = [data[variable]]  # Wrap the integer in a list
-    print(f"\nDescriptive statistics for quantitative variable '{variable}':")
-    print(f"Mean: {statistics.mean(values)}")
-    print(f"Median: {statistics.median(values)}")
-
-    if len(values) >= 2:
-        print(f"Variance: {statistics.variance(values)}")
-        print(f"Standard Deviation: {statistics.stdev(values)}")
-    else:
-        print("Variance and Standard Deviation cannot be calculated with a single data point.")
-
-
 def top_games_in_genre(data, genre, int_owners=50000, n=5):
     genre_lower = genre.lower()
     genre_games = [game for game in data if

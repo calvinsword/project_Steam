@@ -10,7 +10,6 @@ import game_url
 from serial.tools import list_ports
 import serial
 import Statistics
-import playtime_check
 import matplotlib.pyplot as plt
 
 # de setup voor de verschillende text-fonts in de GUI
@@ -48,6 +47,7 @@ time2 = 0
 time1 = 0
 timerM = 0
 numbers = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+Buzzer = "On"
 
 # neerzetten van de booleans voor de verschillende schermen
 mainscreen = False
@@ -59,6 +59,18 @@ playtime = False
 displaytop5games = False
 usernamelogin = True
 STEAM_API_URL = 'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/'
+
+
+def quicksort_games_by_playtime(games):
+    if len(games) <= 1:
+        return games
+
+    pivot = games[len(games) // 2]['playtime_2weeks']
+    left = [game for game in games if game['playtime_2weeks'] > pivot]
+    middle = [game for game in games if game['playtime_2weeks'] == pivot]
+    right = [game for game in games if game['playtime_2weeks'] < pivot]
+
+    return quicksort_games_by_playtime(left) + middle + quicksort_games_by_playtime(right)
 
 
 # definieer een functie voor het openen van een website met de naam van een steam game
@@ -88,7 +100,7 @@ def get_recent_playtime(steam_id):
         # Filter out games with playtime equal to 0 or last played before two weeks ago
         games = [game for game in games if game['playtime_forever'] > 0 and game.get('playtime_2weeks', 0) > 0]
 
-        return games
+        return quicksort_games_by_playtime(games)
     else:
         print(f"Failed to fetch playtime data. Status code: {response.status_code}")
         return None
@@ -295,15 +307,24 @@ while running:
                                     # Open a connection to the Pico
                                     with serial.Serial(port=pico_port, baudrate=115200, bytesize=8, parity='N',
                                                        stopbits=1, timeout=1) as serial_port:
-                                        time_in_seconds = (timerM * 60)
+                                        timer_time = timerM * 60
+                                        if Buzzer == "On":
+                                            buzzer = 1
+                                        else:
+                                            buzzer = 0
 
-                                        time_in_seconds_pico_acceptable = str(time_in_seconds) + "\r"
-                                        serial_port.write(time_in_seconds_pico_acceptable.encode())
-                                        pico_output = read_serial(serial_port)
-                                    serial_port.close()
+                                        serial_input = str(buzzer) + "," + str(timer_time) + "\r"
+                                        serial_port.write(serial_input.encode())
+                                        serial_port.close()
 
                             elif 200 > mousey:
                                 timerM = 0
+
+                            elif 800 > 600:
+                                if Buzzer == "On":
+                                    Buzzer = "Off"
+                                else:
+                                    Buzzer = "On"
 
                         elif 1000 > mousey > 935 and 30 > mousex > 0:
                             mainscreen = True
@@ -514,6 +535,10 @@ while running:
         screen.blit(text, (23, 400))
         pygame.draw.rect(screen, black, (000, 380, 200, 75), 3)
 
+        text = bigFont.render(f"Buzzer: {Buzzer}", False, (0, 0, 0))
+        screen.blit(text, (828, 400))
+        pygame.draw.rect(screen, black, (800, 380, 200, 75), 3)
+
         text = bigFont.render(f"{registerError}", False, (0, 0, 0))
         screen.blit(text, (23, 600))
 
@@ -629,5 +654,4 @@ while running:
     pygame.time.wait(0)
     pygame.display.flip()
 
-# TODO pricegraph ??
-# TODO stats.py?
+# TODO pricegraph

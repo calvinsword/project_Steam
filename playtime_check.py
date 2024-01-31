@@ -7,6 +7,7 @@ STEAM_API_KEY = '7D0FF89CE8B73A585A3265963AE39708'
 
 STEAM_API_URL = 'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/'
 
+
 def get_recent_playtime(steam_id):
     two_weeks_ago = int((datetime.now() - timedelta(days=14)).timestamp())
 
