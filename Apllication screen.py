@@ -55,6 +55,7 @@ timerscreen = False
 bestGame = False
 registerscreen = False
 inlogscherm = True
+playtimePrice = False
 playtime = False
 displaytop5games = False
 usernamelogin = True
@@ -129,170 +130,178 @@ def plot_playtime_graph(steam_id):
     plt.savefig("Images/Playtime.png")
 
 
-while running:
-    if inlogscherm or registerscreen:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+while running:  # start the main loop
+    if inlogscherm or registerscreen:  # if you are in the login/register screen there are different effects on events
+        for event in pygame.event.get():  # listen to events
+            if event.type == pygame.QUIT:  # if you click the red cross close the program
                 quit()
-            if event.type == pygame.KEYDOWN:
-                if event.type == pygame.KEYDOWN:
-                    if usernamelogin:
-                        if event.key == pygame.K_RETURN:
-                            existing_data = []
-                            try:
-                                with open('valid_steamid.json', 'r') as file:
-                                    existing_data = json.load(file)
-                            except (FileNotFoundError, json.decoder.JSONDecodeError):
-                                pass
-                            if inlogscherm:
-                                if any(existing.get('name') == username for existing in existing_data if
-                                       isinstance(existing, dict)):
-                                    for x in existing_data:
-                                        if x['name'] == username:
-                                            currentSteamID = x['steam_id']
-                                    plot_playtime_graph(currentSteamID)
-                                    inlogscherm = False
-                                    mainscreen = True
+            if event.type == pygame.KEYDOWN:  # if the event is that the user pressed a key
+                if usernamelogin:  # if it is the the username string not the steam id
+                    if event.key == pygame.K_RETURN:  # if it is the enter button
+                        existing_data = []  # make an empty array/ empty it
+                        try:
+                            with open('valid_steamid.json', 'r') as file:
+                                existing_data = json.load(file)  # if the file doesnt exist give an error
+                        except (FileNotFoundError, json.decoder.JSONDecodeError):
+                            pass
+                        if inlogscherm:  # if you are in the login file
+                            if any(existing.get('name') == username for existing in existing_data if
+                                   # check if the username is known
+                                   isinstance(existing, dict)):
+                                for x in existing_data:  # get the steam id connected to the username
+                                    if x['name'] == username:
+                                        currentSteamID = x['steam_id']
+                                plot_playtime_graph(
+                                    currentSteamID)  # get the plot of the users playtime in the past 2 weeks
+                                inlogscherm = False  # stop the login process f it is succesfull
+                            mainscreen = True  # turn on the main program page
 
-                            if len(username) < 4:
+                            if len(username) < 4:  # give an error if the username is shorter then 4 characters
                                 usernameloginerror = "Please user your username, it has at least 4 characters"
-                            elif registerscreen:
+                            elif registerscreen:  # change the typing square to the steam id if you registering
                                 usernamelogin = False
-                            else:
+                            else:  # throw a different error if the name isnt known
                                 usernameloginerror = "This username is not know, please try again or register via " \
                                                      "the button below"
-
-                        elif event.key == pygame.K_BACKSPACE:
-                            username = username[:-1]
-                        else:
-                            username += event.unicode
-                    if not usernamelogin:
-                        if event.key == pygame.K_RETURN:
+                    elif event.key == pygame.K_BACKSPACE:
+                        username = username[:-1]  # drop the last character of the string on a backspace
+                    else:
+                        username += event.unicode  # add the character to the string
+                    if not usernamelogin:  # if you are registering
+                        if event.key == pygame.K_RETURN:  # on enter check if the steam ID is correct
                             api_url = f'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?' \
                                       f'key={passwords.SteamAPIKey}&steamids={steamidlogin}'
-
+                            # Create a link to call the API of steam
                             try:
                                 response = requests.get(api_url)
                                 data = response.json()
-
-                                if 'response' in data and 'players' in data['response']:
+                                # get the Data
+                                if 'response' in data and 'players' in data['response']:  #
                                     players = data['response']['players']
-
+                                    # check if the information the user filled in is correct
                                     if players:
                                         player_info = {
                                             'steam_id': steamidlogin,
                                             'name': username
                                         }
-
+                                        # link the json values to the variables
                                         existing_data = []
                                         try:
                                             with open('valid_steamid.json', 'r') as file:
                                                 existing_data = json.load(file)
                                         except (FileNotFoundError, json.decoder.JSONDecodeError):
                                             pass
-
+                                        # open the json file and load the variables
                                         if not isinstance(existing_data, list):
-                                            existing_data = []
-
+                                            existing_data = []  # make the steam id used to log in the running steam id
+                                        # add the data if it doesn't exist yet
                                         with open('valid_steamid.json', 'w') as file:
                                             existing_data.append(player_info)
                                             json.dump(existing_data, file, indent=2)
                                         currentSteamID = steamidlogin
                                         plot_playtime_graph(currentSteamID)
-                                        registerscreen = False
-                                        mainscreen = True
+                                        registerscreen = False  # turn off the register screen
+                                        mainscreen = True  # turn on the main application screen
 
                                     else:
                                         registerError = "This steamID is not valid"
+                                        # show an error if the username is not known
                                 else:
                                     registerError = "The API has given an unexpected response, try again. If the " \
                                                     "error persists please contact the developers"
+                                    # give an error if the API call returns something unexpected
                             except requests.RequestException as e:
                                 registerError = "Unfortunatly we are not able to connect to the steam API at this " \
                                                 "moment"
+                                # throw an error if the steam API is down
 
                         elif event.key == pygame.K_BACKSPACE:
-                            steamidlogin = steamidlogin[:-1]
-                        elif event.unicode in numbers:
+                            steamidlogin = steamidlogin[:-1]  # drop the last character of the steam i on backspace
+                        elif event.unicode in numbers:  # if the character the user put in add it to the steam id
                             steamidlogin += str(event.unicode)
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                test = pygame.mouse.get_pressed(num_buttons=3)
+            if event.type == pygame.MOUSEBUTTONDOWN:  # if the event is a mouseclick
+                test = pygame.mouse.get_pressed(num_buttons=3)  # convert the mousebuttons to a tuple
                 if test[0]:  # true if left click
-                    mousepos = pygame.mouse.get_pos()
-                    mousey = int(mousepos[0])
+                    mousepos = pygame.mouse.get_pos()  # change the mouse position from the event to an array
+                    mousey = int(mousepos[0])  # change the mouse array to 2 seperate ints
                     mousex = int(mousepos[1])
-                    if inlogscherm:
+                    if inlogscherm:  # change the screen if the left click is between the 2 values
                         if 650 > mousey > 200 and 540 > mousex > 450:
                             inlogscherm = False
                             registerscreen = True
-                    if registerscreen:
+                    if registerscreen:  # change the screen if the left click is between the 2 values
                         if 945 > mousey > 605 and 740 > mousex > 650:
                             inlogscherm = True
                             registerscreen = False
 
-                elif test[1]:  # true if middle click
+                elif test[1]:  # true if middle click no functionality
                     continue
-                elif test[2]:  # true if right click
+                elif test[2]:  # true if right click no functionality
                     continue
-                else:  # if scroll wheel is activated
+                else:  # if scroll wheel is activated no functionality
                     continue
-    else:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+    else:  # if the user isn't logging in
+        for event in pygame.event.get():  # gether user events
+            if event.type == pygame.QUIT:  # if pressed on the red cross close the program
                 quit()
             elif event.type == pygame.KEYDOWN:
-                continue
-            elif event.type == pygame.MOUSEBUTTONDOWN:
+                continue  # no functionality
+            elif event.type == pygame.MOUSEBUTTONDOWN:  # same code as for the login screens
                 test = pygame.mouse.get_pressed(num_buttons=3)
                 if test[0]:  # true if left click
                     mousepos = pygame.mouse.get_pos()
                     mousey = int(mousepos[0])
                     mousex = int(mousepos[1])
                     if mainscreen:
-                        if 400 > mousey > 0 and 705 > mousex > 655:
-                            openWebsite(Friends[FriendsScrolling % len(Friends)][1])
+                        if 400 > mousey > 0 and 705 > mousex > 655:  # this is a repeating line of code to check if the
+                            # user pressed on one of the buttons
+                            openWebsite(Friends[FriendsScrolling % len(Friends)][1])  # open the steam page of the game the frind is playing
                         elif 400 > mousey > 0 and 755 > mousex > 705:
                             openWebsite(Friends[(FriendsScrolling + 1) % len(Friends)][1])
                         elif 400 > mousey > 0 and 805 > mousex > 755:
                             openWebsite(Friends[(FriendsScrolling + 2) % len(Friends)][1])
                         elif 400 > mousey > 275 and 655 > mousex > 625:
-                            FriendsScrolling = 0
+                            FriendsScrolling = 0  # reset the scrolling in the friends list
                         elif 1000 > mousey > 935 and 30 > mousex > 0:
-                            timerscreen = True
+                            timerscreen = True  # switch to the timer
                             mainscreen = False
                         elif 900 > mousey > 450 and 800 > mousex > 725:
-                            bestGame = True
+                            bestGame = True  # switch to the top steam games
                             mainscreen = False
                         elif 300 > mousey > 0 and 230 > mousex > 190:
-                            playtime = True
+                            playtimePrice = True  # switch to the playtime/price distribution
                             mainscreen = False
+                        elif 300 > mousey > 0 and 190 > mousex > 150:
+                            playtime = True  # switch to the screen seeing your playtime in the last 2 weeks
+                            mainscreen = False
+                            plot_playtime_graph(currentSteamID)  # plot the playtime
                     elif playtime:
                         if 1000 > mousey > 935 and 30 > mousex > 0:
-                            plot_playtime_graph(currentSteamID)
-                            mainscreen = True
+                            mainscreen = True   # Go back to the mainscreen
                             playtime = False
                     elif timerscreen:
                         if 250 > mousex > 200:
                             if mousey < 200:
-                                timerM += 1
+                                timerM += 1  # increment the timer by 1 minute
                             elif mousey > 800:
-                                timerM += 30
+                                timerM += 30  # increment the timer by 30 minute
                             elif 600 > mousey > 400:
-                                timerM += 5
+                                timerM += 5  # increment the timer by 5 minute
                         elif 320 > mousex > 270:
                             if mousey < 200 and timerM >= 1:
-                                timerM -= 1
+                                timerM -= 1  # decrease the timer by 1 minute
                             if mousey > 800 and timerM >= 30:
-                                timerM -= 30
+                                timerM -= 30  # decrease the timer by 30 minute
                             if 600 > mousey > 400 and timerM >= 5:
-                                timerM -= 5
+                                timerM -= 5  # decrease the timer by 5 minute
                         elif 455 > mousex > 380:
                             if 600 > mousey > 400:
-                                registerError = ""
-                                if timerM <= 0:
+                                registerError = ""  # reset the error message
+                                if timerM <= 0:  # throw an error if the timer isnt bigger then 1 minute
                                     registerError = "The time must be more then 0 minutes"
-                                else:
+                                else:  # start the timer
                                     registerError = "The timer has started"
+                                    timerM = 0  # reset the timer on starting it
 
 
                                     def read_serial(port):
@@ -307,37 +316,32 @@ while running:
                                     # Open a connection to the Pico
                                     with serial.Serial(port=pico_port, baudrate=115200, bytesize=8, parity='N',
                                                        stopbits=1, timeout=1) as serial_port:
-                                        timer_time = timerM * 60
-                                        if Buzzer == "On":
+                                        timer_time = timerM * 60  # start the timer in seconds
+                                        if Buzzer == "On": # tranfer the busser name to  a number
                                             buzzer = 1
                                         else:
                                             buzzer = 0
-
+                                        # Write on the pico LCD the time
                                         serial_input = str(buzzer) + "," + str(timer_time) + "\r"
                                         serial_port.write(serial_input.encode())
                                         serial_port.close()
-
                             elif 200 > mousey:
-                                timerM = 0
-
-                            elif 800 > 600:
-                                if Buzzer == "On":
+                                timerM = 0  # reset the timer
+                            elif 1000 > mousey > 800:
+                                if Buzzer == "On":  # flip the buzzer from on and off and reverse
                                     Buzzer = "Off"
-                                else:
+                                elif Buzzer == "Off":
                                     Buzzer = "On"
 
                         elif 1000 > mousey > 935 and 30 > mousex > 0:
-                            mainscreen = True
+                            mainscreen = True  # go back to the main screen
                             timerscreen = False
-
-                        elif 600 > mousey > 400 and 455 > mousex > 380:
-                            timerM = 0
                     elif bestGame:
-                        bestgamegenre = ""
+                        bestgamegenre = ""  # reset the genre the user is searching
                         if 1000 > mousey > 935 and 30 > mousex > 0:
-                            mainscreen = True
+                            mainscreen = True  # go back to the mainscreen
                             bestGame = False
-                        if mousey < 200:
+                        if mousey < 200:  # pick the genre for the top 5 games
                             if 100 > mousex > 50:
                                 bestgamegenre = "Action"
                             if 200 > mousex > 150:
@@ -376,61 +380,75 @@ while running:
                                 bestgamegenre = "Violent"
                             if 600 > mousex > 550:
                                 bestgamegenre = "Web publishing"
-                        if bestgamegenre != "":
+                        if bestgamegenre != "":  # search the top 5 games of the selected genre and go to that screen
                             bestgamesArray = Statistics.top_games_in_genre(Statistics.read_json_file("steam.json"),
                                                                            bestgamegenre)
                             bestGame = False
                             displaytop5games = True
                     elif displaytop5games:
                         if 1000 > mousey > 935 and 30 > mousex > 0:
-                            displaytop5games = False
+                            displaytop5games = False  # return to the genre selector
                             bestGame = True
+                    elif playtimePrice:
+                        if 1000 > mousey > 935 and 30 > mousex > 0:
+                            mainscreen = True
+                            playtimePrice = True
                 elif test[1]:  # true if middle click
                     continue
                 elif test[2]:  # true if right click
                     continue
                 else:  # if scroll wheel is activated
-                    FriendsScrolling += 1
+                    FriendsScrolling += 1  # scroll trough the friendslist
 
-    screen.fill(grey)
+    screen.fill(grey)  # colour the screen grey
 
-    if mainscreen:
+    if mainscreen:  # run this cde if the main apllication screen
         text = font.render(f"Steam id: {currentSteamID}", False, (0, 0, 0))
-        screen.blit(text, (60, 5))
-        screen.blit(pygame.image.load("Images/Logo50x50.png", ), (0, 0))
+        screen.blit(text, (60, 5))  # this is the text render function, recurring
+        screen.blit(pygame.image.load("Images/Logo50x50.png", ), (0, 0))  # load the logo
         text = font.render("Timer", False, (0, 0, 0))
         screen.blit(text, (940, 5))
-        pygame.draw.rect(screen, black, (935, 0, 65, 30), 3)
+        pygame.draw.rect(screen, black, (935, 0, 65, 30), 3)  # button to open timer
         text = bigFont.render("The best games on steam", False, (0, 0, 0))
         screen.blit(text, (500, 750))
-        pygame.draw.rect(screen, black, (450, 725, 450, 75), 3)
-        text = font.render("Playtime in the past 2 weeks", False, (0, 0, 0))
+        pygame.draw.rect(screen, black, (450, 725, 450, 75), 3)  # button to open the best games
+        text = font.render("Price/playtime distribution", False, (0, 0, 0))
         screen.blit(text, (5, 200))
-        pygame.draw.rect(screen, black, (0, 190, 300, 40), 3)
-        time2 = datetime.now().timestamp() - time1
-        if time2 > 5:
+        pygame.draw.rect(screen, black, (0, 190, 300, 40), 3)  # open the price/playtime comparer
+        text = font.render("Playtime in the past 2 weeks", False, (0, 0, 0))
+        screen.blit(text, (5, 160))
+        pygame.draw.rect(screen, black, (0, 150, 300, 40), 3)  # open the playtime graph
+        time2 = datetime.now().timestamp() - time1  # keep track of the time since the last update
+        if time2 > 5:  # if it has been over 5 seconds reload the friends list
             time1 = datetime.now().timestamp()
-            Friends2 = API.printOnlineFriends(passwords.SteamAPIKey, currentSteamID)
-            if not Friends2:
-                Friends = ["False"]
+            Friends2 = API.printOnlineFriends(passwords.SteamAPIKey, currentSteamID)  # run the api to get the friends list
+            if type(Friends2) == bool:  # if the function returns a bool the API is turned off
+                Friends = ["Error"]
                 continue
             elif Friends2 != Friends:
-                Friends = Friends2
+                Friends = Friends2  # update the stored friends list
+
         # Friends = [["testuser1", "Rounds"], ["testuser2", "Bitburner"],
         # ["testuser3", "Paladins"], ["testuser4", "Runescape"]]
-        if Friends[0] == "False":
-            text = font.render("Your friends list is set to private in steam", False, (0, 0, 0))
-            screen.blit(text, (0, 660))
-        if not Friends:
+        # Backup friendslist for testing
+        if len(Friends) > 0:  # throw an error if the api is set to private
+            if Friends[0] == "Error":
+                text = font.render("Your friends list is set to private in steam", False, (0, 0, 0))
+                screen.blit(text, (0, 660))
+
+        if type(Friends) == list and len(Friends) == 0:  # show this message if there is no one of the users friends online
             text = font.render("None of your friends are currently using steam", False, (0, 0, 0))
             screen.blit(text, (0, 630))
-        if Friends[0] != "False":
+
+        if len(Friends) > 0 and Friends[0] != "Error":  # show the friends
             text = font.render("Your friends are playing:", False, (0, 0, 0))
             screen.blit(text, (0, 630))
             text = font.render("Back to Top", False, (0, 0, 0))
             screen.blit(text, (280, 630))
             pygame.draw.rect(screen, black, (275, 625, 125, 30), 3)
             text = smallFont.render(f"{Friends[FriendsScrolling % len(Friends)][0]}: ", False, (0, 0, 0))
+            # Friends[FriendsScrolling % len(Friends)][0] this code takes the scrolling factor into consideration
+            # to show to the user
             screen.blit(text, (5, 660))
             text = smallFont.render(f"{Friends[FriendsScrolling % len(Friends)][1]} ", False, (0, 0, 0))
             screen.blit(text, (5, 680))
@@ -448,7 +466,7 @@ while running:
                 screen.blit(text, (5, 780))
                 pygame.draw.rect(screen, black, (0, 755, 400, 50), 3)
 
-    elif inlogscherm:
+    elif inlogscherm:  # display the information for loggin in
         text = font.render("Login with your application Username", False, (0, 0, 0))
         screen.blit(text, (100, 50))
         pygame.draw.rect(screen, black, (95, 45, 400, 30), 3)
@@ -465,7 +483,7 @@ while running:
         screen.blit(text, (100, 175))
         screen.blit(pygame.image.load("Images/Logo125x125.png", ), (850, 10))
 
-    elif registerscreen:
+    elif registerscreen:  # display the information to regitser an account
         text = font.render("Create a username:", False, (0, 0, 0))
         screen.blit(text, (100, 50))
         pygame.draw.rect(screen, black, (95, 45, 340, 30), 3)
@@ -495,7 +513,7 @@ while running:
         screen.blit(text, (615, 500))
         screen.blit(pygame.image.load("Images/Logo125x125.png", ), (850, 10))
 
-    elif timerscreen:
+    elif timerscreen:  # display the timer information
         screen.blit(pygame.image.load("Images/Logo50x50.png", ), (0, 0))
         text = font.render("Back", False, (0, 0, 0))
         screen.blit(text, (940, 5))
@@ -540,9 +558,9 @@ while running:
         pygame.draw.rect(screen, black, (800, 380, 200, 75), 3)
 
         text = bigFont.render(f"{registerError}", False, (0, 0, 0))
-        screen.blit(text, (23, 600))
+        screen.blit(text, (23, 600))  # dynamically display the error
 
-    elif bestGame:
+    elif bestGame:  # display the different genres
         text = font.render("Back", False, (0, 0, 0))
         screen.blit(text, (940, 5))
         pygame.draw.rect(screen, black, (935, 0, 65, 30), 3)
@@ -622,7 +640,7 @@ while running:
         screen.blit(text, (805, 555))
         pygame.draw.rect(screen, black, (800, 550, 200, 50), 3)
 
-    elif displaytop5games:
+    elif displaytop5games:  # display the 5 best games for the selected genre
         text = font.render("Back", False, (0, 0, 0))
         screen.blit(text, (940, 5))
         pygame.draw.rect(screen, black, (935, 0, 65, 30), 3)
@@ -645,13 +663,17 @@ while running:
         text = bigFont.render(bestgamesArray[4], False, (0, 0, 0))
         screen.blit(text, (5, 555))
 
-    elif playtime:
+    elif playtime:  # display the image for the playtime
         text = font.render("Back", False, (0, 0, 0))
         screen.blit(text, (940, 5))
         pygame.draw.rect(screen, black, (935, 0, 65, 30), 3)
         screen.blit(pygame.image.load("Images/Playtime.png", ), (50, 50))
 
+    elif playtimePrice:  # display the image for the GamePrice
+        text = font.render("Back", False, (0, 0, 0))
+        screen.blit(text, (940, 5))
+        pygame.draw.rect(screen, black, (935, 0, 65, 30), 3)
+        screen.blit(pygame.image.load("Images/GamePrice.png", ), (50, 50))
+
     pygame.time.wait(0)
     pygame.display.flip()
-
-# TODO pricegraph

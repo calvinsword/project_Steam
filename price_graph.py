@@ -1,21 +1,47 @@
 import json
-import seaborn as sns
+import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
 
-# Load JSON data from file
+# Lees de data uit het JSON-bestand
 with open('steam.json', 'r') as file:
-    game_data = json.load(file)
+    data = json.load(file)
 
-# Get prices from the JSON data
-game_prices = [game['price'] for game in game_data]
+# Verzamel de relevante gegevens (price en median_playtime)
+prices = []
+playtimes = []
+for game in data:
+    prices.append(game['price'])
+    playtimes.append(game['median_playtime'])
 
+# Converteer naar numpy-arrays
+X = np.array(prices).reshape(-1, 1)
+y = np.array(playtimes)
 
-x_axis_range = (0, 60)
+# Verdeel de data in trainings- en testsets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
+# Maak een lineaire regressie model
+model = LinearRegression()
+model.fit(X_train, y_train)
 
-sns.histplot(game_prices, kde=True, bins=20, color='skyblue', edgecolor='black')
-plt.title('Distribution of Prices of All Games')
-plt.xlabel('Price')
-plt.ylabel('Number of games')
-plt.xlim(x_axis_range)
+# Voorspel de y-waarden voor de testset
+y_pred = model.predict(X_test)
+
+# Plot the results with reversed axes
+plt.scatter(X_test, y_test, color='black', label='Test data')  # Swap X_test and y_test
+plt.plot(X_test, y_pred, color='blue', linewidth=3, label='Linear regression')  # Swap X_test and y_pred
+plt.title('Linear Regression: Median Playtime vs. Price')
+plt.xlabel('Price')  # Swap labels
+plt.ylabel('Median Playtime (hours)')  # Swap labels
+
+# Set the maximum limits
+plt.xlim(0, 60)
+plt.ylim(0, 4000)
+
+plt.legend()
+plt.savefig("Images/GamePrice.png")
 plt.show()
+
