@@ -1,7 +1,8 @@
 import utime
 import gc
-
 from lcd_api import LcdApi
+
+"""Only needs to be flashed to the raspberry pi pico"""
 
 # PCF8574 pin definitions
 MASK_RS = 0x01  # P0

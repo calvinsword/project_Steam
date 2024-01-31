@@ -4,7 +4,7 @@ from serial.tools import list_ports
 import serial
 import time
 
-
+"""Only needs to be executed when you want to use the timer separetly from the GUI"""
 def read_serial(port):
     line = port.read(1000)
     return line.decode()
@@ -12,7 +12,7 @@ def read_serial(port):
 
 serial_ports = list_ports.comports()
 
-# als het niet bekend is op welke poort de pico is aangesloten
+"""als het niet bekend is op welke poort de pico is aangesloten"""
 # print("[INFO] Serial ports found:")
 # for i, port in enumerate(serial_ports):
 #     print(str(i) + ". " + str(port.device))
@@ -20,7 +20,7 @@ serial_ports = list_ports.comports()
 # pico_port_index = int(input("Which port is the Raspberry Pi Pico connected to? "))
 # pico_port = serial_ports[pico_port_index].device
 
-# als het wel bekend is welke poort het is kan je dat hardcoden
+"""als het wel bekend is welke poort het is kan je dat hardcoden"""
 pico_port = serial_ports[0].device
 
 # Open a connection to the Pico
@@ -35,8 +35,4 @@ with serial.Serial(port=pico_port, baudrate=115200, bytesize=8, parity='N', stop
 
     serial_input = str(buzzer) + "," + str(timer_time) + "\r"
     serial_port.write(serial_input.encode())
-
-    # pico_output = read_serial(serial_port)
-    # pico_output = pico_output.replace('\r\n', ' ')
-    # print(pico_output)
     serial_port.close()

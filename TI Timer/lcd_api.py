@@ -1,6 +1,8 @@
 """Provides an API for talking to HD44780 compatible character LCDs."""
-
 import time
+
+"""Only needs to be flashed to the raspberry pi pico"""
+
 
 class LcdApi:
     """Implements the API for talking with HD44780 compatible character LCDs.
