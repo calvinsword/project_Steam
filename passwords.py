@@ -1,1 +1,1 @@
-SteamAPIKey = '' # add here your steam API key
+SteamAPIKey = '7D0FF89CE8B73A585A3265963AE39708' # add here your steam API key

@@ -109,9 +109,11 @@ def get_recent_playtime(steam_id):
 
 def plot_playtime_graph(steam_id):
     games = get_recent_playtime(steam_id)
-    game_names = [game['name'] for game in games]
-    playtimes = [game['playtime_2weeks'] // 60 for game in
-                 games]  # Corrected playtime calculation to use playtime_2weeks
+    # Sort the games by playtime using quicksort
+    sorted_games = quicksort_games_by_playtime(games)
+
+    game_names = [game['name'] for game in sorted_games]
+    playtimes = [game['playtime_2weeks'] // 60 for game in sorted_games]
 
     total_playtime = sum(playtimes)
 
@@ -125,8 +127,9 @@ def plot_playtime_graph(steam_id):
 
     plt.xlabel('Games')
     plt.ylabel('Playtime (hours)')
-    plt.title('Steam Game Playtime in the Last 2 Weeks')
+    plt.title('Steam Game Playtime in the Last 2 Weeks (Sorted by Playtime)')
     plt.xticks(rotation=45, ha='right')
+    plt.subplots_adjust(bottom=0.3)
     plt.savefig("Images/Playtime.png")
 
 

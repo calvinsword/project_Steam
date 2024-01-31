@@ -5,8 +5,10 @@ from datetime import datetime, timedelta
 # Replace '7D0FF89CE8B73A585A3265963AE39708' with your actual Steam API key
 STEAM_API_KEY = '7D0FF89CE8B73A585A3265963AE39708'
 
-STEAM_API_URL = 'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/'
+# Replace '76561199005826631' with the target Steam ID
+steam_id = '76561199005826631'
 
+STEAM_API_URL = 'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/'
 
 def get_recent_playtime(steam_id):
     two_weeks_ago = int((datetime.now() - timedelta(days=14)).timestamp())
@@ -34,11 +36,24 @@ def get_recent_playtime(steam_id):
         print(f"Failed to fetch playtime data. Status code: {response.status_code}")
         return None
 
+def quicksort_games_by_playtime(games):
+    if len(games) <= 1:
+        return games
+
+    pivot = games[len(games) // 2]['playtime_2weeks']
+    left = [game for game in games if game['playtime_2weeks'] > pivot]
+    middle = [game for game in games if game['playtime_2weeks'] == pivot]
+    right = [game for game in games if game['playtime_2weeks'] < pivot]
+
+    return quicksort_games_by_playtime(left) + middle + quicksort_games_by_playtime(right)
 
 def plot_playtime_graph(steam_id):
     games = get_recent_playtime(steam_id)
-    game_names = [game['name'] for game in games]
-    playtimes = [game['playtime_2weeks'] // 60 for game in games]  # Corrected playtime calculation to use playtime_2weeks
+    # Sort the games by playtime using quicksort
+    sorted_games = quicksort_games_by_playtime(games)
+
+    game_names = [game['name'] for game in sorted_games]
+    playtimes = [game['playtime_2weeks'] // 60 for game in sorted_games]
 
     total_playtime = sum(playtimes)
 
@@ -52,8 +67,10 @@ def plot_playtime_graph(steam_id):
 
     plt.xlabel('Games')
     plt.ylabel('Playtime (hours)')
-    plt.title('Steam Game Playtime in the Last 2 Weeks')
+    plt.title('Steam Game Playtime in the Last 2 Weeks (Sorted by Playtime)')
     plt.xticks(rotation=45, ha='right')
-    plt.savefig("Images/Playtime.png")
+
+    plt.show()
 
 
+plot_playtime_graph(76561198118008537)
