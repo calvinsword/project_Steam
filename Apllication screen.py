@@ -304,13 +304,6 @@ while running:  # start the main loop
                                     registerError = "The time must be more then 0 minutes"
                                 else:  # start the timer
                                     registerError = "The timer has started"
-                                    timerM = 0  # reset the timer on starting it
-
-
-                                    def read_serial(port):
-                                        line = port.read(1000)
-                                        return line.decode()
-
 
                                     serial_ports = list_ports.comports()
 
@@ -328,6 +321,9 @@ while running:  # start the main loop
                                         serial_input = str(buzzer) + "," + str(timer_time) + "\r"
                                         serial_port.write(serial_input.encode())
                                         serial_port.close()
+
+                                    timerM = 0  # reset the timer after starting it
+
                             elif 200 > mousey:
                                 timerM = 0  # reset the timer
                             elif 1000 > mousey > 800:
